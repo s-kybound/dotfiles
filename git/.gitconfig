@@ -1,0 +1,12 @@
+[branch]
+	autoSetupRebase = always
+[merge]
+	defaultToUpstream = true
+	log = true
+[pull]
+	rebase = true
+[push]
+	default = upstream
+[user]
+	name = Kyriel Abad
+	email = abadkyriel@gmail.com
