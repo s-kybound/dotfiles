@@ -24,6 +24,10 @@ if [ -d ~/.bashrc.d ]; then
 fi
 unset rc
 
+# to set up editor and visual
+export EDITOR=nvim
+export VISUAL=nvim
+
 # to set up vim and nvim
 alias vim='nvim'
 
