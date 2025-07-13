@@ -15,6 +15,6 @@ If adding another item here,
 1. create a new stow module, naming it `<MODULE>` and storing the paths of what we want to take, pretending `<MODULE>` is `~`
 1. use `make preview-add MODULE=<MODULE>` to verify the actions that will be taken, followed by `make add MODULE=<MODULE>`
 
-If updating another item already in a module, use `make refresh MODULE=<MODULE>` or `make refresh-all`.
+If updating another item already in a module, use `make refresh MODULE=<MODULE>` or `make refreshall`.
 
 Otherwise please use `make help` for other useful commands!
