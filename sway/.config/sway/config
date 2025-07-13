@@ -17,7 +17,8 @@ set $right l
 set $term foot
 
 # Your preferred application launcher
-set $menu wmenu-run
+#set $menu wmenu-run
+set $menu wofi --show drun
 
 # Preferred visual editor
 set $visualtoplayer nvim
@@ -94,6 +95,10 @@ output * bg /home/skybound/.config/wallpapers/blue_wallpaper.png fill
 #
 # Moving around:
 #
+    # Disable mouse changing focus
+    focus_follows_mouse no
+    mouse_warping none
+
     # Move your focus around
     bindsym $mod+$left focus left
     bindsym $mod+$down focus down
@@ -203,6 +208,12 @@ mode "resize" {
     bindsym Escape mode "default"
 }
 bindsym $mod+r mode "resize"
+
+default_border pixel
+
+gaps inner 10
+gaps outer 10
+smart_gaps inverse_outer
 #
 # Utilities:
 #
