@@ -1,5 +1,5 @@
-# skybound linux rice (13/07/25)
-After several years of ricing linux, I will finally document my work here, and build a proper system to make it EASY to do in the future. currently this is a Fedora Linux KDE spin environment.
+# skybound linux rice + utils (13/07/25)
+After several years of ricing linux, I will finally document my work here, and build a proper system to make setting up my userspace EASY to do in the future. currently this is a Fedora Linux KDE spin environment.
 
 ## dependencies
 - `KDE` - I use KDE because it keeps important settings like wireless network and keyboard close to me. I find it far easier at the moment to leave handling systems like that to a fully-fledged DE at the moment, though that might change in the future. It also serves as an excellent fallback if my rice ever fails.
