@@ -24,6 +24,9 @@ if [ -d ~/.bashrc.d ]; then
 fi
 unset rc
 
+# to get electron apps to play nice
+ELECTRON_OZONE_PLATFORM_HINT=auto
+
 # to set up editor and visual
 export EDITOR=nvim
 export VISUAL=nvim
