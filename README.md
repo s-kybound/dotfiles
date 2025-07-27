@@ -14,6 +14,7 @@ After several years of ricing linux, I will finally document my work here, and b
 - `stow` - To quickly symlink everything here to their spots. How did I discover this so late?
 - `make` - To handle the nice makefile I have defined here.
 - `wofi` - Faster than `rofi` in my experience and able to list flatpak/snap packages.
+- `neovim` - I used to use Emacs, and couldn't handle coming back to default vim.
 
 ## how to use
 If adding another item here, 
