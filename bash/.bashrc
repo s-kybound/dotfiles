@@ -35,5 +35,35 @@ export VISUAL=nvim
 alias vim='nvim'
 
 # to set up both my own ssh and ahrefs ssh
-eval `ssh-agent` && ssh-add ~/.ssh/id_general && ssh-add ~/.ssh/id_ahrefs
+if [[ -z "$SSH_AUTH_SOCK" ]]; then
+    eval `ssh-agent`
+fi
 
+is_key_added() {
+    local key_path="$1"
+    local key_fp
+    key_fp=$(ssh-keygen -lf "$key_path.pub" | awk '{print $2}')
+
+    ssh-add -l | awk '{print $2}' | grep -q "$key_fp"
+}
+
+safe_ssh_add() {
+    local key_path="$1"
+    is_key_added "$key_path" || ssh-add "$key_path"
+}
+
+add_ssh_key() {
+    local key_path="$1"
+    if [[ -f "$key_path" ]]; then
+        if ! ssh-add -l | grep -q "$key_path"; then
+            safe_ssh_add "$key_path"
+        fi
+    else
+        echo "Warning: SSH key not found at $key_path"
+    fi
+}
+
+add_ssh_key "$HOME/.ssh/id_general"
+add_ssh_key "$HOME/.ssh/id_ahrefs"
+
+. "$HOME/.cargo/env"
