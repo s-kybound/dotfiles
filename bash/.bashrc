@@ -67,3 +67,5 @@ add_ssh_key "$HOME/.ssh/id_general"
 add_ssh_key "$HOME/.ssh/id_ahrefs"
 
 . "$HOME/.cargo/env"
+
+[ -f "/home/skybound/.ghcup/env" ] && . "/home/skybound/.ghcup/env" # ghcup-env

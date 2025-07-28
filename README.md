@@ -10,6 +10,7 @@ After several years of ricing linux, I will finally document my work here, and b
 - `wl-copy` - ^
 - `wl-paste` - ^
 - `swaylock` - For locking screen.
+- `swaync` - For notifications.
 - `bash` - I want to change to zsh in the near future, but this works well for me.
 - `stow` - To quickly symlink everything here to their spots. How did I discover this so late?
 - `make` - To handle the nice makefile I have defined here.
