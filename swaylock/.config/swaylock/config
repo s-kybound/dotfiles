@@ -1,0 +1,51 @@
+ignore-empty-password
+
+# background, currently it's just blurring
+fade-in=0.2
+screenshot
+effect-greyscale
+effect-pixelate=5
+
+# indicator
+indicator-radius=100
+indicator-thickness=10
+indicator-caps-lock
+
+# clock
+clock
+timestr=%R 
+datestr=
+key-hl-color=00000066
+separator-color=00000000
+
+# colors
+inside-color=00000033
+inside-clear-color=ffffff00
+inside-caps-lock-color=ffffff00
+inside-ver-color=ffffff00
+inside-wrong-color=ffffff00
+
+ring-color=ffffff
+ring-clear-color=ffffff
+ring-caps-lock-color=ffffff
+ring-ver-color=ffffff
+ring-wrong-color=ffffff
+
+line-color=00000000
+line-clear-color=ffffffff
+line-caps-lock-color=ffffffff
+line-ver-color=ffffffff
+line-wrong-color=ffffffff
+
+text-color=ffffff
+text-clear-color=ffffff
+text-ver-color=ffffff
+text-wrong-color=ffffff
+
+bs-hl-color=ffffff
+caps-lock-key-hl-color=ffffffff
+caps-lock-bs-hl-color=ffffffff
+disable-caps-lock-text
+text-caps-lock-color=ffffff
+
+

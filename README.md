@@ -9,15 +9,16 @@ After several years of ricing linux, I will finally document my work here, and b
 - `grim` - ^
 - `wl-copy` - ^
 - `wl-paste` - ^
-- `swaylock` - For locking screen.
+- `swaylock-effects` - For locking screen.
 - `swaync` - For notifications.
 - `bash` - I want to change to zsh in the near future, but this works well for me.
 - `stow` - To quickly symlink everything here to their spots. How did I discover this so late?
 - `make` - To handle the nice makefile I have defined here.
 - `wofi` - Faster than `rofi` in my experience and able to list flatpak/snap packages.
 - `neovim` - I used to use Emacs, and couldn't handle coming back to default vim.
-- `eww` - Testing for a new status bar. (! you will need to install it yourself using rustup)
-- ^ will need the following (fedora): glib2-devel libdbusmenu-gtk3-devel cairo-devel cairo-gobjec-devel pango-devel gtk3-devel gtk-layer-shell-devel gdk-pixbuf2-devel glibc-devel
+- `eww` - Testing for a new status bar.
+
+ATM on fedora am using [this COPR](https://copr.fedorainfracloud.org/coprs/solopasha/hyprland)
 
 ## how to use
 If adding another item here, 
