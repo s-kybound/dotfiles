@@ -4,38 +4,35 @@ ignore-empty-password
 fade-in=0.2
 screenshot
 effect-greyscale
-effect-pixelate=5
+effect-pixelate=15
 
 # indicator
+indicator
 indicator-radius=100
 indicator-thickness=10
 indicator-caps-lock
 
 # clock
 clock
-timestr=%R 
-datestr=
+timestr=locked.
+datestr=%R
 key-hl-color=00000066
 separator-color=00000000
 
 # colors
-inside-color=00000033
-inside-clear-color=ffffff00
-inside-caps-lock-color=ffffff00
-inside-ver-color=ffffff00
-inside-wrong-color=ffffff00
+inside-color=000000ff
+inside-clear-color=000000ff
+inside-caps-lock-color=000000ff
+inside-ver-color=000000ff
+inside-wrong-color=000000ff
 
 ring-color=ffffff
 ring-clear-color=ffffff
-ring-caps-lock-color=ffffff
+ring-caps-lock-color=ffff88
 ring-ver-color=ffffff
-ring-wrong-color=ffffff
+ring-wrong-color=ff8888
 
-line-color=00000000
-line-clear-color=ffffffff
-line-caps-lock-color=ffffffff
-line-ver-color=ffffffff
-line-wrong-color=ffffffff
+line-uses-inside
 
 text-color=ffffff
 text-clear-color=ffffff
@@ -47,5 +44,4 @@ caps-lock-key-hl-color=ffffffff
 caps-lock-bs-hl-color=ffffffff
 disable-caps-lock-text
 text-caps-lock-color=ffffff
-
 

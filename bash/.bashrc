@@ -68,4 +68,11 @@ add_ssh_key "$HOME/.ssh/id_ahrefs"
 
 . "$HOME/.cargo/env"
 
+
 [ -f "/home/skybound/.ghcup/env" ] && . "/home/skybound/.ghcup/env" # ghcup-env
+# fnm
+FNM_PATH="/home/skybound/.local/share/fnm"
+if [ -d "$FNM_PATH" ]; then
+  export PATH="$FNM_PATH:$PATH"
+  eval "`fnm env`"
+fi
