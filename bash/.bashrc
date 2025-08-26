@@ -5,9 +5,19 @@ if [ -f /etc/bashrc ]; then
     . /etc/bashrc
 fi
 
+CUSTOM_DEF="$HOME/.bash_env"
+CUSTOM_SSH="$HOME/.bash_ssh"
+
 # Source custom definitions
-if [ -f "$HOME/.bash_custom" ]; then
-    . "$HOME/.bash_custom"
+if [ -f "$CUSTOM_DEF" ]; then
+    . "$CUSTOM_DEF"
+else
+    echo "! Missing custom bash environment variables in $CUSTOM_DEF"
+fi    
+if [ -f "$CUSTOM_SSH" ]; then
+    . "$CUSTOM_SSH"
+else
+    echo "! Missing custom ssh configuration in $CUSTOM_DEF"
 fi
 
 # User specific environment
