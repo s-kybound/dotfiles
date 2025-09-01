@@ -5,6 +5,7 @@ After several years of ricing linux, I will finally document my work here, and b
 - `KDE` - I use KDE because it keeps important settings like wireless network and keyboard close to me. I find it far easier at the moment to leave handling systems like that to a fully-fledged DE at the moment, though that might change in the future. It also serves as an excellent fallback if my rice ever fails.
 - `kitty` - I use the default hyprland terminal.
 - `hyprland` - Experimenting.
+- `hyprpaper` - Wallpaper.
 - `slurp` - For screenshots.
 - `grim` - ^
 - `wl-copy` - ^
@@ -16,7 +17,8 @@ After several years of ricing linux, I will finally document my work here, and b
 - `make` - To handle the nice makefile I have defined here.
 - `wofi` - Faster than `rofi` in my experience and able to list flatpak/snap packages.
 - `neovim` - I used to use Emacs, and couldn't handle coming back to default vim.
-- `eww` - Testing for a new status bar.
+- `emacs` - sike. lets try both
+- `quickshell` - Testing for a new status bar.
 
 ATM on fedora am using [this COPR](https://copr.fedorainfracloud.org/coprs/solopasha/hyprland)
 
