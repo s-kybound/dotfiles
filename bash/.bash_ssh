@@ -28,5 +28,4 @@ add_ssh_key() {
 }
 
 add_ssh_key "$HOME/.ssh/id_general"
-add_ssh_key "$HOME/.ssh/id_ahrefs"
 
