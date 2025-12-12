@@ -1,4 +1,5 @@
 import Quickshell
+import Quickshell.Services.UPower
 import QtQuick
 
 PanelWindow {
@@ -45,9 +46,31 @@ PanelWindow {
     }
 
     QtObject {
-        id: batteryService
-        function get() {
-            return "[TODO: battery]"
+	id: batteryService
+	function getTimeLeft(seconds) {
+		function pad(n) {
+			return n < 10 ? "0" + n : n
+		}
+		var hours = Math.floor(seconds / 3600)
+		var minutes = Math.floor((seconds % 3600) / 60)
+		return hours + ":" + pad(minutes)
+	}
+	function getBatteryStatus() {
+		var device = UPower.displayDevice
+		var percentage = (device.percentage * 100).toFixed(0)
+		var timeToState = UPower.onBattery ? device.timeToEmpty : device.timeToFull
+		var direction = UPower.onBattery ? "↓" : "↑"
+		var powerDraw = UPower.onBattery 
+		              ? " " + device.changeRate.toFixed(2) + "W" 
+		              : "" 
+		var timeString = timeToState > 0 ? getTimeLeft(timeToState) : "∞"
+		return "[" + percentage + "% " + direction + " " + timeString + powerDraw + "]"
+	}
+	function get() {
+		var device = UPower.displayDevice
+		return device.isLaptopBattery
+		? getBatteryStatus()
+		: "[AC Power]"
         }
     }
     
