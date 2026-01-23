@@ -19,6 +19,7 @@ After several years of ricing linux, I will finally document my work here, and b
 - `neovim` - I used to use Emacs, and couldn't handle coming back to default vim.
 - `emacs` - sike. lets try both
 - `quickshell` - Testing for a new status bar.
+- `fortune` + `cowsay` + `fastfetch` - for fun terminal greetings.
 
 ATM on fedora am using [this COPR](https://copr.fedorainfracloud.org/coprs/solopasha/hyprland)
 
