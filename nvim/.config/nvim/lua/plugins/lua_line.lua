@@ -118,11 +118,11 @@ return {
 				},
 				lualine_c = {},
 				lualine_x = {},
-				lualine_y = { 
-						search_result, 
-					        'o:encoding', 
-					        {'fileformat', icons_enabled = false }, 
-					        'filetype' 
+				lualine_y = {
+						search_result,
+					        'o:encoding',
+					        {'fileformat', icons_enabled = false },
+					        'filetype'
 				            },
 				lualine_z = { '%l:%c', '%p%%/%L' },
 			},
