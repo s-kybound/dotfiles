@@ -1,38 +1,93 @@
 import Quickshell
-import Quickshell.Services.UPower
+import QtQuick.Layouts
+
 import QtQuick
+import Quickshell.Hyprland
+import Quickshell.Services.UPower
+import Quickshell.Services.Pipewire
 
 PanelWindow {
     anchors { top: true; left: true; right: true }
     implicitHeight: 30
 
     // status bar - use the text prepared in the services
-    Row {
+    RowLayout {
         anchors.fill: parent
         anchors.margins: 8
-        spacing: 20
+//        spacing: 20
 
-        // left: battery
-        Text {
-            text: services.battery.get()
+// left: battery and workspaces
+
+        Item {
+	    Layout.fillWidth: true
+            Layout.fillHeight: true
+	    Layout.preferredWidth: 1
+	    Layout.minimumWidth: 0
+	    Layout.alignment: Qt.AlignLeft
+	    RowLayout {
+	    	anchors.fill: parent
+		Text { text: services.battery.get() }
+
+		// experimental: workspace list
+		// refactor this out!!!
+                RowLayout {
+		    spacing : 4
+		    Text { text: "[" }
+		    Repeater {
+            		model: Hyprland.workspaces
+
+            		delegate: Text {
+			    required property var modelData
+ 			    text : modelData.name
+			    font.underline: modelData.focused
+
+                	    MouseArea {
+                    		anchors.fill: parent
+                    		onClicked: modelData.activate()
+                	    }
+                    	}
+    		    }
+		    Text { text: "]" }
+               }
+
+		Item { Layout.fillWidth: true }
+            }
         }
 
-        // center: clock
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: services.clock.get()
+	// center: clock
+	Item {
+	    Layout.fillWidth: true
+	    Layout.fillHeight: true
+	    Layout.preferredWidth: 1
+	    Layout.minimumWidth: 0
+	    Layout.alignment: Qt.AlignHCenter
+	    RowLayout {
+	 	anchors.fill: parent
+		Item { Layout.fillWidth: true }
+		Text { text: services.clock.get() }
+		Item { Layout.fillWidth: true }
+            }
         }
 
-        // right: volume
-        Text {
-            anchors.right: parent.right
-            text: services.audio.get()
+	// right: volume
+	Item {
+	    Layout.fillWidth: true
+	    Layout.fillHeight: true
+	    Layout.preferredWidth: 1
+	    Layout.minimumWidth: 0
+	    Layout.alignment: Qt.AlignRight
+	    RowLayout {
+	    	anchors.fill: parent
+	    	Item { Layout.fillWidth: true }
+	    	Text { text: services.audio.get() }
+    	    }
         }
     }
     
     QtObject {
         id: services
-        property var clock: clockService
+	property var clock: clockService
+	property var workspaces: workspacesService
         property var battery: batteryService
         property var audio: audioService
     }
@@ -75,9 +130,28 @@ PanelWindow {
     }
     
     QtObject {
-        id: audioService
-        function get() {
-            return "[TODO: audio]"
+	id: audioService
+	property var sink: Pipewire.defaultAudioSink
+	property PwObjectTracker tracker: PwObjectTracker {
+		objects: audioService.sink ? [audioService.sink] : []
+	}
+
+	function get() {
+	    const sink = audioService.sink
+	    if (!Pipewire.ready || !sink || !sink.audio) {
+		return "[N/A]"
+	    }
+	    
+	    const audio = sink.audio
+	    if (audio.muted) {
+		return "[muted]"
+	    }
+	    
+	    const vol = Math.round(audio.volume * 100)
+	    if (vol > 100) {
+		return "[!!! " + vol + "%]"
+	    }
+            return "[" + vol + "%]"
         }
     }
 }
