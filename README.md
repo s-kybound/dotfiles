@@ -12,7 +12,7 @@ After several years of ricing linux, I will finally document my work here, and b
 - `wl-paste` - ^
 - `swaylock-effects` - For locking screen.
 - `swaync` - For notifications.
-- `bash` - I want to change to zsh in the near future, but this works well for me.
+- `zsh` + `starship` - For a nice terminal experience.
 - `stow` - To quickly symlink everything here to their spots. How did I discover this so late?
 - `make` - To handle the nice makefile I have defined here.
 - `wofi` - Faster than `rofi` in my experience and able to list flatpak/snap packages.

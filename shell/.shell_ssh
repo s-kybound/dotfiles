@@ -1,0 +1,101 @@
+# Start ssh-agent only if we don't have a working one
+#if [[ -z "$SSH_AUTH_SOCK" ]] || ! ssh-add -l >/dev/null 2>&1; then
+#  eval "$(ssh-agent -s)" >/dev/null
+#fi
+
+#is_key_added() {
+#    local key_path="$1"
+#    local key_fp
+#    key_fp=$(ssh-keygen -lf "$key_path.pub" | awk '{print $2}')
+
+#    ssh-add -l | awk '{print $2}' | grep -q "$key_fp"
+#}
+
+#safe_ssh_add() {
+#local key_path="$1"
+#    is_key_added "$key_path" || ssh-add "$key_path"
+#}
+
+#add_ssh_key() {
+#local key_path="$1"
+#    if [[ -f "$key_path" ]]; then
+#        if ! ssh-add -l | grep -q "$key_path"; then
+#            safe_ssh_add "$key_path"
+#        fi
+#    else
+# echo "Warning: SSH key not found at $key_path"
+#    fi
+#}
+
+#add_ssh_key "$HOME/.ssh/id_general"
+
+# ~/.shell_ssh
+# Works in zsh + bash. Starts at most one agent per login/session and reuses it.
+
+# ---- run-once guard (prevents redoing work in nested shells) ----
+if [[ -n "${__SHELL_SSH_RAN:-}" ]]; then
+  return 0
+fi
+export __SHELL_SSH_RAN=1
+
+# ---- persistent agent env (reused across shells) ----
+SSH_ENV="$HOME/.ssh/agent.env"
+
+_start_agent() {
+  umask 077
+  ssh-agent -s >| "$SSH_ENV"
+  source "$SSH_ENV" >/dev/null 2>&1
+}
+
+_load_agent_env() {
+  [[ -f "$SSH_ENV" ]] && source "$SSH_ENV" >/dev/null 2>&1
+}
+
+_agent_usable() {
+  [[ -n "${SSH_AUTH_SOCK:-}" ]] && ssh-add -l >/dev/null 2>&1
+}
+
+# Load existing agent (if any), otherwise start a new one
+_load_agent_env
+if ! _agent_usable; then
+  _start_agent
+fi
+
+# ---- key management ----
+_fingerprint_of_key() {
+  # Print fingerprint (field 2) or nothing on failure
+  local key_path="$1"
+  local out=""
+  if [[ -f "$key_path.pub" ]]; then
+    out=$(ssh-keygen -lf "$key_path.pub" 2>/dev/null | awk '{print $2}')
+  elif [[ -f "$key_path" ]]; then
+    out=$(ssh-keygen -lf "$key_path" 2>/dev/null | awk '{print $2}')
+  fi
+  [[ -n "$out" ]] && printf '%s\n' "$out"
+}
+
+_key_added() {
+  local key_path="$1"
+  local fp
+  fp=$(_fingerprint_of_key "$key_path") || return 1
+  # grep -F to match literal fingerprint; -- to stop option parsing
+  ssh-add -l 2>/dev/null | awk '{print $2}' | grep -Fq -- "$fp"
+}
+
+_add_key() {
+  local key_path="$1"
+
+  if [[ ! -f "$key_path" ]]; then
+    echo "Warning: SSH key not found at $key_path"
+    return 0
+  fi
+
+  # Only add if missing
+  if ! _key_added "$key_path"; then
+    ssh-add "$key_path" >/dev/null
+  fi
+}
+
+# ---- add your keys here ----
+_add_key "$HOME/.ssh/id_general"
+# _add_key "$HOME/.ssh/id_ahrefs"   # if you have one
