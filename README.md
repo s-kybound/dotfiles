@@ -10,7 +10,7 @@ After several years of ricing linux, I will finally document my work here, and b
 - `grim` - ^
 - `wl-copy` - ^
 - `wl-paste` - ^
-- `swaylock-effects` - For locking screen.
+- `hyprlock` - For locking screen.
 - `swaync` - For notifications.
 - `zsh` + `starship` - For a nice terminal experience.
 - `stow` - To quickly symlink everything here to their spots. How did I discover this so late?
