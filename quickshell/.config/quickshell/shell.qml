@@ -23,7 +23,7 @@ PanelWindow {
         anchors.margins: 8
 //        spacing: 20
 
-// left: battery and clock
+// left: clock and network
 
         Item {
 	    Layout.fillWidth: true
@@ -33,17 +33,8 @@ PanelWindow {
 	    Layout.alignment: Qt.AlignLeft
 	    RowLayout {
 	    	anchors.fill: parent
-		BarText {
-		    text: services.battery.get(batteryMouse.containsMouse)
-		    MouseArea {
-			id: batteryMouse
-			anchors.fill: parent
-			hoverEnabled: true
-		    }
-		}
-
 		BarText { text: services.clock.get() }
-
+		BarText { text: services.network.get() }
 		Item { Layout.fillWidth: true }
             }
         }
@@ -114,7 +105,7 @@ PanelWindow {
 	    }
 	}
 
-	// right: network and volume
+	// right: volume and battery
 	Item {
 	    Layout.fillWidth: true
 	    Layout.fillHeight: true
@@ -124,7 +115,6 @@ PanelWindow {
 	    RowLayout {
 	    	anchors.fill: parent
 	    	Item { Layout.fillWidth: true }
-	    	BarText { text: services.network.get() }
 	    	Row {
 	    	    spacing: 0
 	    	    Repeater {
@@ -139,6 +129,14 @@ PanelWindow {
 	    	                onClicked: services.audio.act(modelData)
 	    	            }
 	    	        }
+	    	    }
+	    	}
+	    	BarText {
+	    	    text: services.battery.get(batteryMouse.containsMouse)
+	    	    MouseArea {
+	    	        id: batteryMouse
+	    	        anchors.fill: parent
+	    	        hoverEnabled: true
 	    	    }
 	    	}
     	    }
