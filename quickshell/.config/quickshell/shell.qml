@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell.Hyprland
 import Quickshell.Services.UPower
 import Quickshell.Services.Pipewire
+import Quickshell.Networking
 
 PanelWindow {
     anchors { top: true; left: true; right: true }
@@ -69,7 +70,7 @@ PanelWindow {
             }
         }
 
-	// right: volume
+	// right: network and volume
 	Item {
 	    Layout.fillWidth: true
 	    Layout.fillHeight: true
@@ -79,6 +80,7 @@ PanelWindow {
 	    RowLayout {
 	    	anchors.fill: parent
 	    	Item { Layout.fillWidth: true }
+	    	Text { text: services.network.get() }
 	    	Text { text: services.audio.get() }
     	    }
         }
@@ -90,6 +92,7 @@ PanelWindow {
 	property var workspaces: workspacesService
         property var battery: batteryService
         property var audio: audioService
+        property var network: networkService
     }
 
     SystemClock { id: sysclock; precision: SystemClock.Minutes }
@@ -152,6 +155,34 @@ PanelWindow {
 		return "[!!! " + vol + "%]"
 	    }
             return "[" + vol + "%]"
+        }
+    }
+
+    QtObject {
+	id: networkService
+	function get() {
+	    const devices = Networking.devices.values
+	    for (let i = 0; i < devices.length; i++) {
+		const dev = devices[i]
+		if (!dev.connected) {
+		    continue
+		}
+
+		if (dev.type === DeviceType.Wifi) {
+		    const nets = dev.networks.values
+		    for (let j = 0; j < nets.length; j++) {
+			if (nets[j].connected) {
+			    return "[" + nets[j].name + "]"
+			}
+		    }
+		    return "[Wi-Fi]"
+		}
+
+		if (dev.type === DeviceType.Wired) {
+		    return "[Ethernet]"
+		}
+	    }
+	    return "[Disconnected]"
         }
     }
 }
