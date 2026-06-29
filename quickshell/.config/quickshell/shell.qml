@@ -23,7 +23,7 @@ PanelWindow {
         anchors.margins: 8
 //        spacing: 20
 
-// left: battery and workspaces
+// left: battery and clock
 
         Item {
 	    Layout.fillWidth: true
@@ -42,58 +42,77 @@ PanelWindow {
 		    }
 		}
 
-		// experimental: workspace list
-		// refactor this out!!!
-                RowLayout {
-		    spacing : 4
-		    BarText { text: "[" }
-		    Repeater {
-            		model: Hyprland.workspaces
-
-            		delegate: Item {
-			    required property var modelData
-                            width: 12
-			    height: label.implicitHeight
-
-			    BarText {
-				id: label
-				anchors.centerIn: parent
-			        text: (modelData.focused || mouse.containsMouse)
-			              ? modelData.name
-				      : "•"
-			        font.underline: modelData.focused
-			    }
-
-			    MouseArea {
-			        id: mouse
-				anchors.fill: parent
-				hoverEnabled: true
-                    		onClicked: modelData.activate()
-			    	cursorShape: Qt.PointingHandCursor
-                	    }
-                    	}
-    		    }
-		    BarText { text: "]" }
-               }
+		BarText { text: services.clock.get() }
 
 		Item { Layout.fillWidth: true }
             }
         }
 
-	// center: clock
+	// center: workspace carousel - the focused workspace stays fixed at the
+	// centre of the screen while the others shift around it
 	Item {
 	    Layout.fillWidth: true
 	    Layout.fillHeight: true
 	    Layout.preferredWidth: 1
 	    Layout.minimumWidth: 0
 	    Layout.alignment: Qt.AlignHCenter
-	    RowLayout {
-	 	anchors.fill: parent
-		Item { Layout.fillWidth: true }
-		BarText { text: services.clock.get() }
-		Item { Layout.fillWidth: true }
-            }
-        }
+	    clip: true
+
+	    Row {
+		id: workspaceRow
+		anchors.verticalCenter: parent.verticalCenter
+		spacing: 4
+
+		readonly property int itemWidth: 12
+
+		// centre-x of the focused workspace within the row
+		function focusedCentre() {
+		    const list = Hyprland.workspaces.values
+		    for (let i = 0; i < list.length; i++) {
+			if (list[i].focused) {
+			    // offset by the leading "[" bracket before the first workspace
+			    return leftBracket.width + spacing
+			         + i * (itemWidth + spacing) + itemWidth / 2
+			}
+		    }
+		    return 0
+		}
+
+		// shift the row so the focused workspace lands on screen centre
+		x: parent.width / 2 - focusedCentre()
+		Behavior on x { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+
+		BarText { id: leftBracket; text: "[" }
+
+		Repeater {
+		    model: Hyprland.workspaces
+		    delegate: Item {
+			required property var modelData
+			width: workspaceRow.itemWidth
+			height: label.implicitHeight
+
+			BarText {
+			    id: label
+			    anchors.centerIn: parent
+			    text: (modelData.focused || mouse.containsMouse)
+				  ? modelData.name
+				  : "•"
+			    font.underline: modelData.focused
+			}
+
+			MouseArea {
+			    id: mouse
+			    anchors.fill: parent
+			    hoverEnabled: true
+			    onClicked: modelData.activate()
+			    cursorShape: Qt.PointingHandCursor
+			}
+		    }
+		}
+
+		BarText { text: "]" }
+	    }
+	}
 
 	// right: network and volume
 	Item {
