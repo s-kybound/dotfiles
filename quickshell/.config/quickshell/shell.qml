@@ -33,7 +33,14 @@ PanelWindow {
 	    Layout.alignment: Qt.AlignLeft
 	    RowLayout {
 	    	anchors.fill: parent
-		BarText { text: services.battery.get() }
+		BarText {
+		    text: services.battery.get(batteryMouse.containsMouse)
+		    MouseArea {
+			id: batteryMouse
+			anchors.fill: parent
+			hoverEnabled: true
+		    }
+		}
 
 		// experimental: workspace list
 		// refactor this out!!!
@@ -123,6 +130,10 @@ PanelWindow {
 
     QtObject {
 	id: batteryService
+
+	// bar segments shown on each side of the centred battery text
+	readonly property int barsPerSide: 5
+
 	function getTimeLeft(seconds) {
 		function pad(n) {
 			return n < 10 ? "0" + n : n
@@ -131,21 +142,34 @@ PanelWindow {
 		var minutes = Math.floor((seconds % 3600) / 60)
 		return hours + ":" + pad(minutes)
 	}
-	function getBatteryStatus() {
+	function getBatteryStatus(showPower) {
 		var device = UPower.displayDevice
 		var percentage = (device.percentage * 100).toFixed(0)
 		var timeToState = UPower.onBattery ? device.timeToEmpty : device.timeToFull
 		var direction = UPower.onBattery ? "↓" : "↑"
-		var powerDraw = UPower.onBattery 
-		              ? " " + device.changeRate.toFixed(2) + "W" 
-		              : "" 
 		var timeString = timeToState > 0 ? getTimeLeft(timeToState) : "∞"
-		return "[" + percentage + "% " + direction + " " + timeString + powerDraw + "]"
+
+		// on hover, the duration field is replaced by the power draw
+		var detail = showPower ? device.changeRate.toFixed(0) + "W" : timeString
+
+		// pad each field to a fixed width so the readout never changes size
+		var text = percentage.padStart(3) + "% "
+		         + direction + " "
+		         + detail.padStart(5)
+
+		// charge level as a meter, with the text always centred between
+		// an equal number of segments on each side
+		var segments = batteryService.barsPerSide * 2
+		var filled = Math.min(Math.round(device.percentage * segments), segments)
+		var meter = "|".repeat(filled) + ":".repeat(segments - filled)
+		var left = meter.slice(0, batteryService.barsPerSide)
+		var right = meter.slice(batteryService.barsPerSide)
+		return "[" + left + " " + text + " " + right + "]"
 	}
-	function get() {
+	function get(showPower) {
 		var device = UPower.displayDevice
 		return device.isLaptopBattery
-		? getBatteryStatus()
+		? getBatteryStatus(showPower)
 		: "[AC Power]"
         }
     }
