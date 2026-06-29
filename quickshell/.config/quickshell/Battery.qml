@@ -48,9 +48,18 @@ BarText {
                    + meter.slice(root.barsPerSide) + "]"
     }
 
+    // the time/power field is 5 chars wide and starts after the bracket,
+    // the left bars, a space, "NNN% ", the direction arrow and a space
+    readonly property int detailColumn: barsPerSide + 9
+    readonly property int detailWidth: 5
+    readonly property real charUnit: text.length ? contentWidth / text.length : 0
+
+    // hovering just the time field reveals the power draw in its place
     MouseArea {
         id: hover
-        anchors.fill: parent
         hoverEnabled: true
+        height: parent.height
+        x: root.charUnit * root.detailColumn
+        width: root.charUnit * root.detailWidth
     }
 }
