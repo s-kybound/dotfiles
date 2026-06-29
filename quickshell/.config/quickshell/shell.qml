@@ -256,7 +256,17 @@ PanelWindow {
 
 		const audio = sink.audio
 		if (audio.muted) {
-			return [{ text: "[muted]", action: "mute", value: 0 }]
+			// same width as a full meter: "MUTE" (4 chars, like "100%")
+			// sits centred where the percentage would, with spaces in
+			// place of the bars
+			const pad = " ".repeat(audioService.barsPerSide + 1)
+			return [
+				{ text: "[", action: "", value: 0 },
+				{ text: pad, action: "", value: 0 },
+				{ text: "MUTE", action: "mute", value: 0 },
+				{ text: pad, action: "", value: 0 },
+				{ text: "]", action: "", value: 0 },
+			]
 		}
 
 		const vol = Math.round(audio.volume * 100)
