@@ -157,6 +157,10 @@ PanelWindow {
 		objects: audioService.sink ? [audioService.sink] : []
 	}
 
+	// keep the volume meter a constant width regardless of the percentage;
+	// bars/colons shrink to make room for a wider number
+	readonly property int meterWidth: 15
+
 	function get() {
 	    const sink = audioService.sink
 	    if (!Pipewire.ready || !sink || !sink.audio) {
@@ -169,10 +173,10 @@ PanelWindow {
 	    }
 	    
 	    const vol = Math.round(audio.volume * 100)
-	    if (vol > 100) {
-		return "[!!! " + vol + "%]"
-	    }
-            return "[" + vol + "%]"
+	    const label = " " + (vol > 100 ? "!!! " + vol + "%" : vol + "%") + " "
+	    const segments = Math.max(audioService.meterWidth - label.length, 0)
+	    const filled = Math.min(Math.round(segments * vol / 100), segments)
+	    return "[" + "|".repeat(filled) + label + ":".repeat(segments - filled) + "]"
         }
     }
 
