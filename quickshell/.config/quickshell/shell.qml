@@ -181,26 +181,38 @@ PanelWindow {
 		objects: audioService.sink ? [audioService.sink] : []
 	}
 
-	// keep the volume meter a constant width regardless of the percentage;
-	// bars/colons shrink to make room for a wider number
-	readonly property int meterWidth: 15
+	// bar segments shown on each side of the centred volume percentage
+	readonly property int barsPerSide: 5
+
+	// pad a string to a fixed width with the slack split evenly each side
+	function centre(s, width) {
+	    const slack = Math.max(width - s.length, 0)
+	    const left = Math.floor(slack / 2)
+	    return " ".repeat(left) + s + " ".repeat(slack - left)
+	}
 
 	function get() {
 	    const sink = audioService.sink
 	    if (!Pipewire.ready || !sink || !sink.audio) {
 		return "[N/A]"
 	    }
-	    
+
 	    const audio = sink.audio
 	    if (audio.muted) {
 		return "[muted]"
 	    }
-	    
+
 	    const vol = Math.round(audio.volume * 100)
-	    const label = " " + (vol > 100 ? "!!! " + vol + "%" : vol + "%") + " "
-	    const segments = Math.max(audioService.meterWidth - label.length, 0)
-	    const filled = Math.min(Math.round(segments * vol / 100), segments)
-	    return "[" + "|".repeat(filled) + label + ":".repeat(segments - filled) + "]"
+	    const text = centre(vol + "%", 4)
+
+	    // over 100% the bars turn into exclamation marks as a warning
+	    const fill = vol > 100 ? "!" : "|"
+	    const segments = audioService.barsPerSide * 2
+	    const filled = Math.min(Math.round(audio.volume * segments), segments)
+	    const meter = fill.repeat(filled) + ":".repeat(segments - filled)
+	    const left = meter.slice(0, audioService.barsPerSide)
+	    const right = meter.slice(audioService.barsPerSide)
+	    return "[" + left + " " + text + " " + right + "]"
         }
     }
 
