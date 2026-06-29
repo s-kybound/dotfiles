@@ -125,7 +125,22 @@ PanelWindow {
 	    	anchors.fill: parent
 	    	Item { Layout.fillWidth: true }
 	    	BarText { text: services.network.get() }
-	    	BarText { text: services.audio.get() }
+	    	Row {
+	    	    spacing: 0
+	    	    Repeater {
+	    	        model: services.audio.cells()
+	    	        delegate: BarText {
+	    	            required property var modelData
+	    	            text: modelData.text
+	    	            MouseArea {
+	    	                anchors.fill: parent
+	    	                enabled: modelData.action !== ""
+	    	                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+	    	                onClicked: services.audio.act(modelData)
+	    	            }
+	    	        }
+	    	    }
+	    	}
     	    }
         }
     }
@@ -205,34 +220,67 @@ PanelWindow {
 
 	// pad a string to a fixed width with the slack split evenly each side
 	function centre(s, width) {
-	    const slack = Math.max(width - s.length, 0)
-	    const left = Math.floor(slack / 2)
-	    return " ".repeat(left) + s + " ".repeat(slack - left)
+		const slack = Math.max(width - s.length, 0)
+		const left = Math.floor(slack / 2)
+		return " ".repeat(left) + s + " ".repeat(slack - left)
 	}
 
-	function get() {
-	    const sink = audioService.sink
-	    if (!Pipewire.ready || !sink || !sink.audio) {
-		return "[N/A]"
-	    }
+	// set the volume to a 0..1 fraction, unmuting first
+	function setVolume(value) {
+		if (audioService.sink && audioService.sink.audio) {
+			audioService.sink.audio.muted = false
+			audioService.sink.audio.volume = value
+		}
+	}
 
-	    const audio = sink.audio
-	    if (audio.muted) {
-		return "[muted]"
-	    }
+	function toggleMute() {
+		if (audioService.sink && audioService.sink.audio) {
+			audioService.sink.audio.muted = !audioService.sink.audio.muted
+		}
+	}
 
-	    const vol = Math.round(audio.volume * 100)
-	    const text = centre(vol + "%", 4)
+	// run the action carried by a clicked meter cell
+	function act(cell) {
+		if (cell.action === "volume") {
+			setVolume(cell.value)
+		} else if (cell.action === "mute") {
+			toggleMute()
+		}
+	}
 
-	    // over 100% the bars turn into exclamation marks as a warning
-	    const fill = vol > 100 ? "!" : "|"
-	    const segments = audioService.barsPerSide * 2
-	    const filled = Math.min(Math.round(audio.volume * segments), segments)
-	    const meter = fill.repeat(filled) + ":".repeat(segments - filled)
-	    const left = meter.slice(0, audioService.barsPerSide)
-	    const right = meter.slice(audioService.barsPerSide)
-	    return "[" + left + " " + text + " " + right + "]"
-        }
+	// the meter as a list of {text, action, value} cells; cells with an
+	// action are clickable ("volume" sets that level, "mute" toggles mute)
+	function cells() {
+		const sink = audioService.sink
+		if (!Pipewire.ready || !sink || !sink.audio) {
+			return [{ text: "[N/A]", action: "", value: 0 }]
+		}
+
+		const audio = sink.audio
+		if (audio.muted) {
+			return [{ text: "[muted]", action: "mute", value: 0 }]
+		}
+
+		const vol = Math.round(audio.volume * 100)
+		const number = centre(vol + "%", 4)
+		const fill = vol > 100 ? "!" : "|"
+		const segments = audioService.barsPerSide * 2
+		const filled = Math.min(Math.round(audio.volume * segments), segments)
+
+		const out = [{ text: "[", action: "", value: 0 }]
+		for (let i = 0; i < segments; i++) {
+			out.push({ text: i < filled ? fill : ":", action: "volume", value: (i + 1) / segments })
+			if (i === audioService.barsPerSide - 1) {
+				out.push({ text: " ", action: "", value: 0 })
+				for (const c of number) {
+					out.push({ text: c, action: "mute", value: 0 })
+				}
+				out.push({ text: " ", action: "", value: 0 })
+			}
+		}
+		out.push({ text: "]", action: "", value: 0 })
+		return out
+	}
     }
 
     QtObject {
