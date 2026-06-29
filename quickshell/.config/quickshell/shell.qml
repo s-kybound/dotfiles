@@ -43,14 +43,26 @@ PanelWindow {
 		    Repeater {
             		model: Hyprland.workspaces
 
-            		delegate: BarText {
+            		delegate: Item {
 			    required property var modelData
- 			    text : modelData.name
-			    font.underline: modelData.focused
+                            width: 12
+			    height: label.implicitHeight
 
-                	    MouseArea {
-                    		anchors.fill: parent
+			    BarText {
+				id: label
+				anchors.centerIn: parent
+			        text: (modelData.focused || mouse.containsMouse)
+			              ? modelData.name
+				      : "•"
+			        font.underline: modelData.focused
+			    }
+
+			    MouseArea {
+			        id: mouse
+				anchors.fill: parent
+				hoverEnabled: true
                     		onClicked: modelData.activate()
+			    	cursorShape: Qt.PointingHandCursor
                 	    }
                     	}
     		    }
