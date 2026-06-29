@@ -70,13 +70,13 @@ Row {
 
         const vol = Math.round(audio.volume * 100)
         const number = centre(vol + "%", 4)
-        const fill = vol > 100 ? "!" : "|"
+        const fill = vol > 100 ? "!" : "█"
         const segments = root.barsPerSide * 2
         const filled = Math.min(Math.round(audio.volume * segments), segments)
 
         const out = [{ text: "[", action: "", value: 0 }]
         for (let i = 0; i < segments; i++) {
-            out.push({ text: i < filled ? fill : ":", action: "volume", value: (i + 1) / segments })
+            out.push({ text: i < filled ? fill : "░", action: "volume", value: (i + 1) / segments })
             if (i === root.barsPerSide - 1) {
                 out.push({ text: " ", action: "", value: 0 })
                 for (const c of number) {

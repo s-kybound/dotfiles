@@ -43,7 +43,7 @@ BarText {
         // charge level as a meter, text centred between equal sides
         const segments = root.barsPerSide * 2
         const filled = Math.min(Math.round(device.percentage * segments), segments)
-        const meter = "|".repeat(filled) + ":".repeat(segments - filled)
+        const meter = "█".repeat(filled) + "░".repeat(segments - filled)
         return "[" + meter.slice(0, root.barsPerSide) + " " + text + " "
                    + meter.slice(root.barsPerSide) + "]"
     }
