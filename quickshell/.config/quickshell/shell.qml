@@ -8,8 +8,14 @@ import Quickshell.Services.Pipewire
 import Quickshell.Networking
 
 PanelWindow {
+    id: bar
     anchors { top: true; left: true; right: true }
     implicitHeight: 30
+
+    // all bar text shares one font
+    component BarText: Text {
+        font.family: "Iosevka"
+    }
 
     // status bar - use the text prepared in the services
     RowLayout {
@@ -27,17 +33,17 @@ PanelWindow {
 	    Layout.alignment: Qt.AlignLeft
 	    RowLayout {
 	    	anchors.fill: parent
-		Text { text: services.battery.get() }
+		BarText { text: services.battery.get() }
 
 		// experimental: workspace list
 		// refactor this out!!!
                 RowLayout {
 		    spacing : 4
-		    Text { text: "[" }
+		    BarText { text: "[" }
 		    Repeater {
             		model: Hyprland.workspaces
 
-            		delegate: Text {
+            		delegate: BarText {
 			    required property var modelData
  			    text : modelData.name
 			    font.underline: modelData.focused
@@ -48,7 +54,7 @@ PanelWindow {
                 	    }
                     	}
     		    }
-		    Text { text: "]" }
+		    BarText { text: "]" }
                }
 
 		Item { Layout.fillWidth: true }
@@ -65,7 +71,7 @@ PanelWindow {
 	    RowLayout {
 	 	anchors.fill: parent
 		Item { Layout.fillWidth: true }
-		Text { text: services.clock.get() }
+		BarText { text: services.clock.get() }
 		Item { Layout.fillWidth: true }
             }
         }
@@ -80,8 +86,8 @@ PanelWindow {
 	    RowLayout {
 	    	anchors.fill: parent
 	    	Item { Layout.fillWidth: true }
-	    	Text { text: services.network.get() }
-	    	Text { text: services.audio.get() }
+	    	BarText { text: services.network.get() }
+	    	BarText { text: services.audio.get() }
     	    }
         }
     }
