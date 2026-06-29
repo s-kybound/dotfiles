@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+#
+# pmp - poor man's profiler
+#
+# Samples a running process's stack with gdb a number of times and reports
+# the most common call stacks, approximating where it spends its time.
+
+prog="$(basename "$0")"
+
+target="$1"
+nsamples="${2:-100}"
+sleeptime="${3:-0.1}"
+
+if [ -z "$target" ]; then
+  echo "Usage: $prog <pid|process_name> [nsamples] [sleeptime]" >&2
+  exit 1
+fi
+
+if ! command -v gdb >/dev/null 2>&1; then
+  echo "$prog: gdb is required but was not found in PATH" >&2
+  exit 1
+fi
+
+if [[ "$target" =~ ^[0-9]+$ ]]; then
+  pid="$target"
+else
+  read -ra pids <<< "$(pidof "$target")"
+  if [ "${#pids[@]}" -gt 1 ]; then
+    echo "Multiple PIDs found for process '$target': ${pids[*]}" >&2
+    echo "Using the first PID: ${pids[0]}" >&2
+  fi
+  pid="${pids[0]}"
+fi
+
+if [ -z "$pid" ]; then
+  echo "Could not find process or PID: $target" >&2
+  exit 1
+fi
+
+for _ in $(seq 1 "$nsamples"); do
+  gdb -ex "set pagination 0" \
+      -ex "thread apply all bt" \
+      -batch -p "$pid"
+  sleep "$sleeptime"
+done | awk '
+  BEGIN { s = ""; }
+  /^Thread/ { print s; s = ""; }
+  /^#/ { if (s != "") { s = s "," $4 } else { s = $4 } }
+  END { print s }
+' | sort | uniq -c | sort -r -n -k 1,1
