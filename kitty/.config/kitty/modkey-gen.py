@@ -20,11 +20,14 @@ if mod not in ("super", "alt"):
 KEYS = [
     ("h", "h"), ("j", "j"), ("k", "k"), ("l", "l"),
     ("shift+h", "H"), ("shift+j", "J"), ("shift+k", "K"), ("shift+l", "L"),
-    ("backslash", "\\\\"),
-    ("shift+minus", "_"),
     ("f", "f"),
+    ("n", "n"),
     ("space", "\\x20"),
     ("enter", "\\x0d"),
+    # Shift+Enter has no natural distinct byte sequence of its own in
+    # the classic ESC-relay convention, so pick a free char instead -
+    # tmux binds the literal 'M-~' rather than a notional "M-S-Enter".
+    ("shift+enter", "~"),
     ("shift+q", "Q"),
     ("1", "1"), ("2", "2"), ("3", "3"), ("4", "4"), ("5", "5"),
     ("6", "6"), ("7", "7"), ("8", "8"), ("9", "9"),
