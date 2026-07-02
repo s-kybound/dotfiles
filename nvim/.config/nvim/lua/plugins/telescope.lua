@@ -12,6 +12,8 @@ return {
     { "<leader>fh", "<cmd>Telescope help_tags<cr>", desc = "Help Tags" },
     { "<leader>fd", "<cmd>Telescope diagnostics<cr>", desc = "Diagnostics" },
     { "<leader>fk", "<cmd>Telescope keymaps<cr>", desc = "Keymaps" },
+    { "<leader>fl", "<cmd>Telescope current_buffer_fuzzy_find<cr>", desc = "Fuzzy Find Lines (current buffer)" },
+    { "<leader>/", "<cmd>Telescope current_buffer_fuzzy_find<cr>", desc = "Fuzzy Find Lines (current buffer)" },
   },
   opts = {
     defaults = {
