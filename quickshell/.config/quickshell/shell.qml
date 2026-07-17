@@ -4,6 +4,18 @@ import QtQuick.Layouts
 
 // Top bar: each segment lives in its own component file in this directory.
 PanelWindow {
+    // Pin the bar to the main monitor by name (desktop: DP-3, laptop: eDP-1)
+    // so it doesn't end up on whichever screen Qt happens to pick first -
+    // e.g. a rotated side monitor, where a "top" bar reads as a side bar.
+    screen: {
+        const preferred = ["DP-3", "eDP-1"];
+        for (const name of preferred) {
+            const match = Quickshell.screens.find(s => s.name === name);
+            if (match) return match;
+        }
+        return Quickshell.screens[0];
+    }
+
     anchors { top: true; left: true; right: true }
     implicitHeight: 30
 
