@@ -14,7 +14,6 @@
   #:use-module (gnu services)
   #:use-module (gnu system shadow)
   #:use-module (nongnu packages nvidia)
-  #:use-module (nongnu packages mozilla)
   #:use-module (claude-code-guix packages claude-code)
   #:use-module (pi-guix packages pi))
 
@@ -25,6 +24,7 @@
         (list claude-code pi-coding-agent)
         (map (compose replace-mesa specification->package)
           (list "pavucontrol"
+	        "alsa-utils"
 	        "foot"
 	        "emacs"
 	        "neovim"
@@ -59,10 +59,17 @@
 	  (simple-service 'foot-config
 			  home-xdg-configuration-files-service-type
 			  (list (list "foot/foot.ini"
-				      (plain-file "foot.ini"
-"[main]
-font=Iosevka Term:size=14
-"))))
+				      (local-file ".guix/foot.ini"))))
+
+	  (simple-service 'wireplumber-dp-audio
+			  home-xdg-configuration-files-service-type
+			  (list (list "wireplumber/wireplumber.conf.d/51-nvidia-dp-audio.conf"
+				      (local-file ".guix/wireplumber-dp-audio.conf"))))
+
+	  (simple-service 'niri-config
+			  home-xdg-configuration-files-service-type
+			  (list (list "niri/config.kdl"
+				      (local-file ".guix/niri.kdl"))))
 
           (service home-files-service-type
            `((".guile" ,%default-dotguile)

@@ -1,16 +1,13 @@
 (use-modules (gnu)
-	     (gnu services base)
-	     (gnu packages display-managers)
 	     (gnu packages glib)
 	     (gnu packages window-management)
-	     (noctalia)
 	     (nongnu packages nvidia)
 	     (nongnu services nvidia)
 	     (nonguix transformations)
 	     (nongnu packages linux)
 	     (nongnu system linux-initrd))
 
-(use-service-modules cups desktop networking ssh xorg)
+(use-service-modules desktop sound xorg)
 
 ((nonguix-transformation-nvidia #:driver nvda)
  (operating-system
@@ -47,6 +44,8 @@
      (append (map specification->package
 		  (list #;"llama-cpp"
 		        "niri"
+		        "xwayland-satellite"
+		        "xorg-server-xwayland"
  	                "foot"
  	                "noctalia-git"
                         "ranger"
@@ -62,8 +61,8 @@
    (services
      (cons* (service nvidia-service-type)
 	    (service pam-limits-service-type
-		     (list (pam-limits-entry "@realtime" 'both 'rtprio 99)
-			   (pam-limits-entry "@realtime" 'both 'memlock 'unlimited)))
+		     (list (pam-limits-entry "@audio" 'both 'rtprio 99)
+			   (pam-limits-entry "@audio" 'both 'memlock 'unlimited)))
 	    (service greetd-service-type
 		     (greetd-configuration
 		       (greeter-supplementary-groups (list "video" "input"))
@@ -79,7 +78,7 @@
 				   (command-args (list (file-append niri "/bin/niri") "--session")))))))))))
    	    (modify-services %desktop-services
 			     (delete gdm-service-type)
-			     #;(alsa-service-type config => (alsa-configuration (pulseaudio? #f))))))
+			     (delete pulseaudio-service-type))))
 
    (bootloader (bootloader-configuration
                  (bootloader grub-efi-bootloader)
