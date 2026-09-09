@@ -71,17 +71,17 @@
 	  (simple-service 'foot-config
 			  home-xdg-configuration-files-service-type
 			  (list (list "foot/foot.ini"
-				      (local-file ".guix/foot.ini"))))
+				      (local-file "foot/.config/foot/foot.ini"))))
 
 	  (simple-service 'wireplumber-dp-audio
 			  home-xdg-configuration-files-service-type
 			  (list (list "wireplumber/wireplumber.conf.d/51-nvidia-dp-audio.conf"
-				      (local-file ".guix/wireplumber-dp-audio.conf"))))
+				      (local-file "wireplumber/.config/wireplumber/wireplumber.conf.d/51-nvidia-dp-audio.conf"))))
 
 	  (simple-service 'niri-config
 			  home-xdg-configuration-files-service-type
 			  (list (list "niri/config.kdl"
-				      (local-file ".guix/niri.kdl"))))
+				      (local-file "niri/.config/niri/config.kdl"))))
 
           ;; dummy proxy resolver stops libproxy crashing PrusaSlicer's WebKit network process
           (simple-service 'webkit-login-env
