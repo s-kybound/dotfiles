@@ -28,6 +28,12 @@
 		"cowsay"
 		"neofetch"
                 "glib-networking"))
+        (specifications->packages
+          (list "rust" "rust:cargo" "rust:tools" "rust:rust-src" "rust-analyzer"
+                "ocaml" "dune" "ocaml-lsp-server" "ocamlformat" "ocaml-utop" "opam"
+                "node"
+                "gcc-toolchain" "make" "pkg-config"))
+        (map (compose replace-mesa specification->package)
           (list "pavucontrol"
 	        "xdg-utils"
 	        "alsa-utils"
