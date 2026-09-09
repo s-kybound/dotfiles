@@ -54,7 +54,7 @@ if [[ -d "$FNM_PATH" ]]; then
 fi
 
 # ---- OCaml ----
-eval "$(opam env)"
+command -v opam >/dev/null 2>&1 && eval "$(opam env)"
 
 # ---- Starship ----
-eval "$(starship init zsh)"
+command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
