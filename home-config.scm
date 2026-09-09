@@ -23,13 +23,11 @@
     (packages 
       (append
         (list claude-code pi-coding-agent)
-        ;; kept off replace-mesa (it corrupts prusa-slicer's viewport); glib-networking backs its login webview's TLS
-        (map specification->package
+        (specifications->packages
           (list "prusa-slicer"
 		"cowsay"
 		"neofetch"
                 "glib-networking"))
-        (map (compose replace-mesa specification->package)
           (list "pavucontrol"
 	        "xdg-utils"
 	        "alsa-utils"
@@ -50,13 +48,20 @@
 	  (service home-ssh-agent-service-type)
 	  (service home-openssh-service-type
 		   (home-openssh-configuration
-		     (add-keys-to-agent "yes")))
+		     (add-keys-to-agent "yes")
+		     (hosts
+		       (list
+			 (openssh-host
+			   (name "eclair")
+			   (host-name "10.6.2.114")
+			   (user "skybound")
+			   (identity-file "~/.ssh/id_ed25519"))))))
 	  (service home-dbus-service-type)
 	  (service home-pipewire-service-type
 		   (home-pipewire-configuration
 		     (enable-pulseaudio? #t)))
-         (simple-service 'font-prefs
-                      home-fontconfig-service-type
+          (simple-service 'font-prefs
+	           home-fontconfig-service-type
                       (list
                         '(alias
                            (family "monospace")
