@@ -1,4 +1,6 @@
 (use-modules (gnu)
+	     (guix gexp)
+	     (gnu packages admin)
 	     (gnu packages glib)
 	     (gnu packages window-management)
 	     (nongnu packages nvidia)
@@ -67,17 +69,24 @@
 		     (greetd-configuration
 		       (greeter-supplementary-groups (list "video" "input"))
 		       (terminals
-			 (list
+			 (cons
 			   (greetd-terminal-configuration
-			     (terminal-vt "7")
+			     (terminal-vt "1")
 			     (terminal-switch #t)
 			     (default-session-command
-			       (greetd-agreety-session
-				 (command (greetd-user-session
-			           (command (file-append dbus "/bin/dbus-run-session"))
-				   (command-args (list (file-append niri "/bin/niri") "--session")))))))))))
+			       #~(string-append
+				   #$(file-append tuigreet "/bin/tuigreet")
+				   " --time --remember --remember-session --asterisks"
+				   " --sessions "
+				   #$(file-append niri "/share/wayland-sessions")
+				   " --session-wrapper "
+				   #$(file-append dbus "/bin/dbus-run-session"))))
+			   (map (lambda (vt)
+				  (greetd-terminal-configuration (terminal-vt vt)))
+				'("2" "3" "4" "5" "6"))))))
    	    (modify-services %desktop-services
 			     (delete gdm-service-type)
+			     (delete mingetty-service-type)
 			     (delete pulseaudio-service-type))))
 
    (bootloader (bootloader-configuration
