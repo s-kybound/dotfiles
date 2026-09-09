@@ -1,37 +1,12 @@
-# skybound linux rice + utils (13/07/25)
-After several years of ricing linux, I will finally document my work here, and build a proper system to make setting up my userspace EASY to do in the future. currently this is a Fedora Linux KDE spin environment.
+# skybound linux rice + utils (09/09/26)
+After several years of ricing linux, I will finally document my work here, and build a proper system to make setting up my userspace EASY to do in the future. currently this is a non/guix environment.
 
 ## dependencies
-- `KDE` - I use KDE because it keeps important settings like wireless network and keyboard close to me. I find it far easier at the moment to leave handling systems like that to a fully-fledged DE at the moment, though that might change in the future. It also serves as an excellent fallback if my rice ever fails.
-- `kitty` - I use the default hyprland terminal.
-- `hyprland` - Experimenting.
-- `hyprpaper` - Wallpaper.
-- `slurp` - For screenshots.
-- `grim` - ^
-- `wl-copy` - ^
-- `wl-paste` - ^
-- `hyprlock` - For locking screen.
-- `swaync` - For notifications.
-- `zsh` + `starship` - For a nice terminal experience.
-- `stow` - To quickly symlink everything here to their spots. How did I discover this so late?
-- `make` - To handle the nice makefile I have defined here.
-- `wofi` - Faster than `rofi` in my experience and able to list flatpak/snap packages.
+- `foot` - nice and light
+- `niri` - looks nice
+- `noctalia` - ^
+- `zsh` - For a nice terminal experience.
 - `neovim` - I used to use Emacs, and couldn't handle coming back to default vim.
-- `emacs` - sike. lets try both
-- `quickshell` - Testing for a new status bar.
-- `fortune` + `cowsay` + `fastfetch` - for fun terminal greetings.
-- `gnome-keyring` - For storing passwords and secrets.
-- `libsecret` - For storing passwords and secrets.
-- `seahorse` - GUI for managing secrets.
+- `emacs` - sike. lets try both?
+- `daikichi` + `cowsay` + `neofetch` - for fun terminal greetings.
 
-ATM on fedora am using [this COPR](https://copr.fedorainfracloud.org/coprs/solopasha/hyprland)
-
-## how to use
-If adding another item here, 
-
-1. create a new stow module, naming it `<MODULE>` and storing the paths of what we want to take, pretending `<MODULE>` is `~`
-1. use `make preview-add MODULE=<MODULE>` to verify the actions that will be taken, followed by `make add MODULE=<MODULE>`
-
-If updating another item already in a module, use `make refresh MODULE=<MODULE>` or `make refreshall`.
-
-Otherwise please use `make help` for other useful commands!

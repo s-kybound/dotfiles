@@ -26,6 +26,8 @@
         ;; kept off replace-mesa (it corrupts prusa-slicer's viewport); glib-networking backs its login webview's TLS
         (map specification->package
           (list "prusa-slicer"
+		"cowsay"
+		"neofetch"
                 "glib-networking"))
         (map (compose replace-mesa specification->package)
           (list "pavucontrol"
