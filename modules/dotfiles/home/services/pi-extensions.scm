@@ -1,0 +1,226 @@
+;; Declarative extension management for the pi coding agent.
+
+(define-module (dotfiles home services pi-extensions)
+  #:use-module (guix packages)
+  #:use-module (guix gexp)
+  #:use-module (guix git-download)
+  #:use-module (guix records)
+  #:use-module (guix monads)
+  #:use-module (guix store)
+  #:use-module (guix base32)
+  #:use-module (gnu packages base)
+  #:use-module (gnu packages node)
+  #:use-module (gnu home services)
+  #:use-module (srfi srfi-1)
+  #:use-module (ice-9 match)
+  #:export (pi-extension
+            pi-extension?
+            pi-extension-type
+            pi-extension-source
+            pi-extension-ref
+            pi-extension-version
+            pi-extension-hash
+            pi-extensions->home-services))
+
+(define %pi-extensions-node node-lts)
+
+(define-record-type* <pi-extension>
+  pi-extension make-pi-extension
+  pi-extension?
+  (type    pi-extension-type)
+  (source  pi-extension-source)
+  (ref     pi-extension-ref (default #f))
+  (version pi-extension-version (default #f))
+  (hash    pi-extension-hash (default #f)))
+
+(define (pi-extension->settings-string ext)
+  (match (pi-extension-type ext)
+    ('git (string-append "git:" (pi-extension-source ext)
+                          "@" (pi-extension-ref ext)))
+    ('npm (pi-extension-source ext))))
+
+(define (json-string-list strings)
+  (string-append "[\n"
+                 (string-join
+                   (map (lambda (s) (string-append "    \"" s "\""))
+                        strings)
+                   ",\n")
+                 "\n  ]"))
+
+(define* (pi-settings-file extensions
+                            #:key
+                            (theme "dark")
+                            (default-provider #f)
+                            (default-model #f)
+                            (last-changelog-version #f))
+  (computed-file "settings.json"
+    #~(call-with-output-file #$output
+        (lambda (port)
+          (display
+            (string-append
+              "{\n"
+              #$(if last-changelog-version
+                    (string-append "  \"lastChangelogVersion\": \""
+                                   last-changelog-version "\",\n")
+                    "")
+              "  \"theme\": \"" #$theme "\""
+              #$(if default-provider
+                    (string-append ",\n  \"defaultProvider\": \""
+                                   default-provider "\"")
+                    "")
+              #$(if default-model
+                    (string-append ",\n  \"defaultModel\": \""
+                                   default-model "\"")
+                    "")
+              ",\n  \"packages\": "
+              #$(json-string-list (map pi-extension->settings-string extensions))
+              "\n}\n")
+            port)))))
+
+(define (pi-extension-checkout ext)
+  (unless (pi-extension-hash ext)
+    (error "pi-extension: git extensions require #:hash" (pi-extension-source ext)))
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+           (url (string-append "https://" (pi-extension-source ext)))
+           (commit (pi-extension-ref ext))))
+    (file-name (string-append
+                 (last (string-split (pi-extension-source ext) #\/))
+                 "-checkout"))
+    (sha256 (base32 (pi-extension-hash ext)))))
+
+(define (pi-git-extensions-activation-gexp extensions)
+  (define git-extensions
+    (filter (lambda (e) (eq? (pi-extension-type e) 'git)) extensions))
+  #~(begin
+      (use-modules (guix build utils))
+      (for-each
+        (lambda (pair)
+          (let* ((source (car pair))
+                 (checkout (cdr pair))
+                 (dest (string-append (getenv "HOME")
+                                      "/.pi/agent/git/" source)))
+            (mkdir-p (dirname dest))
+            (when (file-exists? dest) (delete-file-recursively dest))
+            (copy-recursively checkout dest #:log #f)
+            (for-each (lambda (f) (chmod f #o755))
+                      (find-files dest #:directories? #t))))
+        (list #$@(map (lambda (e)
+                        #~(cons #$(pi-extension-source e)
+                                #$(pi-extension-checkout e)))
+                      git-extensions)))))
+
+(define (pi-npm-package-json extensions)
+  (define npm-extensions
+    (filter (lambda (e) (eq? (pi-extension-type e) 'npm)) extensions))
+  (computed-file "package.json"
+    #~(call-with-output-file #$output
+        (lambda (port)
+          (display
+            (string-append
+              "{\n  \"name\": \"pi-extensions\",\n"
+              "  \"private\": true,\n  \"dependencies\": {\n"
+              #$(string-join
+                  (map (lambda (e)
+                         (string-append "    \"" (pi-extension-source e)
+                                        "\": \""
+                                        (or (pi-extension-version e) "*")
+                                        "\""))
+                       npm-extensions)
+                  ",\n")
+              "\n  }\n}\n")
+            port)))))
+
+(define* (npm-install-fetch package-json hash-algo hash name
+                             #:key (system (%current-system))
+                             (guile (default-guile)))
+  (define build
+    (with-imported-modules '((guix build utils))
+      #~(begin
+          (use-modules (guix build utils))
+          (setenv "PATH" #+(file-append coreutils "/bin"))
+          (setenv "HOME" (getcwd))
+          (setenv "npm_config_cache" (string-append (getcwd) "/.npm-cache"))
+          (setenv "npm_config_update_notifier" "false")
+          (setenv "npm_config_audit" "false")
+          (setenv "npm_config_fund" "false")
+          (mkdir "src")
+          (copy-file #+package-json "src/package.json")
+          (with-directory-excursion "src"
+            (invoke #+(file-append %pi-extensions-node "/bin/npm")
+                    "install" "--ignore-scripts" "--no-audit" "--no-fund"
+                    "--os=linux" "--cpu=x64" "--libc=glibc"))
+          (when (file-exists? "src/node_modules/.package-lock.json")
+            (delete-file-recursively "src/node_modules/.package-lock.json"))
+          (mkdir-p #$output)
+          (copy-recursively "src/package.json"
+                            (string-append #$output "/package.json") #:log #f)
+          (copy-recursively "src/package-lock.json"
+                            (string-append #$output "/package-lock.json") #:log #f)
+          (copy-recursively "src/node_modules"
+                            (string-append #$output "/node_modules") #:log #f))))
+  (mlet %store-monad ((guile (package->derivation guile system)))
+    (gexp->derivation name build
+                      #:system system
+                      #:guile-for-build guile
+                      #:hash-algo hash-algo
+                      #:hash hash
+                      #:recursive? #t
+                      #:local-build? #f)))
+
+(define* (pi-extensions->home-services extensions
+                                        #:key
+                                        (theme "dark")
+                                        (default-provider #f)
+                                        (default-model #f)
+                                        (last-changelog-version #f)
+                                        (npm-hash #f))
+  (define npm-extensions
+    (filter (lambda (e) (eq? (pi-extension-type e) 'npm)) extensions))
+  (unless (or (null? npm-extensions) npm-hash)
+    (error "pi-extensions->home-services: npm extensions require #:npm-hash -
+compute it with 'guix build' on the resulting .drv and -K to keep the failed
+output, or replicate the npm install manually and 'guix hash -x -r' it"))
+  (define npm-fetch
+    (and (not (null? npm-extensions))
+         (origin
+           (method npm-install-fetch)
+           (uri (pi-npm-package-json extensions))
+           (file-name "pi-extensions-node-modules")
+           (sha256 (base32 npm-hash)))))
+  (list
+    (simple-service 'pi-extension-files
+                    home-files-service-type
+      `((".pi/agent/settings.json"
+         ,(pi-settings-file extensions
+                             #:theme theme
+                             #:default-provider default-provider
+                             #:default-model default-model
+                             #:last-changelog-version last-changelog-version))
+        ,@(if npm-fetch
+              `((".pi/agent/npm/package.json"
+                 ,(computed-file "package.json"
+                    #~(copy-file (string-append #$npm-fetch "/package.json")
+                                 #$output)))
+                (".pi/agent/npm/package-lock.json"
+                 ,(computed-file "package-lock.json"
+                    #~(copy-file (string-append #$npm-fetch "/package-lock.json")
+                                 #$output))))
+              '())))
+    (simple-service 'pi-npm-extensions
+                    home-activation-service-type
+                    (if npm-fetch
+                        #~(begin
+                            (use-modules (guix build utils))
+                            (let ((dest (string-append (getenv "HOME")
+                                                       "/.pi/agent/npm/node_modules")))
+                              (when (file-exists? dest)
+                                (delete-file-recursively dest))
+                              (copy-recursively
+                                (string-append #$npm-fetch "/node_modules")
+                                dest #:log #f)))
+                        #~(begin)))
+    (simple-service 'pi-git-extensions
+                    home-activation-service-type
+                    (pi-git-extensions-activation-gexp extensions))))

@@ -1,6 +1,8 @@
 ;; This is a sample Guix Home configuration which can help setup your
 ;; home directory in the same declarative manner as Guix System.
 ;; For more information, see the Home Configuration section of the manual.
+(add-to-load-path (string-append (dirname (current-filename)) "/modules"))
+
 (define-module (guix-home-config)
   #:use-module (guix gexp)
   #:use-module (gnu packages)
@@ -19,7 +21,8 @@
   #:use-module (gnu packages base)
   #:use-module (nongnu packages nvidia)
   #:use-module (claude-code-guix packages claude-code)
-  #:use-module (pi-guix packages pi))
+  #:use-module (pi-guix packages pi)
+  #:use-module (dotfiles home services pi-extensions))
 
 (define (llama-server-home-shepherd-service name port model-path extra-args)
   (shepherd-service
@@ -63,6 +66,21 @@
             (system* #$(file-append coreutils "/bin/ln") "-s" target link))))
       '#$(map (lambda (pair) (cons (car pair) (disk-mount (cdr pair))))
               links)))
+
+(define %pi-extensions
+  (list
+    (pi-extension (type 'git)
+                  (source "github.com/ayghri/i-have-adhd")
+                  (ref "6f1f982d0a47c65899af3c5a7450b7098bc65325")
+                  (hash "15iigxii7s7aj80lcy6hm1xv9q96z6wsvys9jsqyav857lrknd4a"))
+    (pi-extension (type 'git)
+                  (source "github.com/v2nic/pi-caveman")
+                  (ref "2480692ffabddc3d1efec8eb822e664ff7e0e5ef")
+                  (hash "03964sxm5ll3f6p4s2ba4rxj78qkp8q260lc82y7b7wbksz9pli7"))
+    (pi-extension (type 'npm) (source "pi-hermes-memory") (version "^0.9.9"))
+    (pi-extension (type 'npm) (source "pi-observational-memory") (version "^3.0.4"))
+    (pi-extension (type 'npm) (source "teach-me") (version "^2.0.0"))
+    (pi-extension (type 'npm) (source "tdd-enforcer") (version "^0.3.10"))))
 
 (define home-config
   (home-environment
@@ -183,6 +201,13 @@
                               '("-ncmoe" "35" "-ngl" "999" "-c" "131072"
                                 "-fa" "on" "-b" "4096" "-ub" "4096"
                                 "-t" "8" "-tb" "16" "-np" "1")))))
+
+        (pi-extensions->home-services
+          %pi-extensions
+          #:default-provider "local-qwen"
+          #:default-model "qwen3.6-35b-a3b"
+          #:last-changelog-version "0.85.1"
+          #:npm-hash "08w6k2fbx2rkwh7i44sh32z00gnc50lfz2db4hfs8fxsaag3px8n")
 
         %base-home-services))))
 
