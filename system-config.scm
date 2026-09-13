@@ -48,7 +48,8 @@
    (packages
      (append (map specification->package
 		  (list ;; ai stuffs
-		        #;"llama-cpp"
+		        "llama-cpp"
+			"vulkan-loader"
 			;; desktop stuffs
 		        "niri"
 		        "xwayland-satellite"
