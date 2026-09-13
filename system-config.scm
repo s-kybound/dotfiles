@@ -45,20 +45,25 @@
    ;; Packages installed system-wide.  Users can also install packages
    ;; under their own account: use 'guix search KEYWORD' to search
    ;; for packages and 'guix install PACKAGE' to install a package.
-   (packages 
+   (packages
      (append (map specification->package
-		  (list #;"llama-cpp"
+		  (list ;; ai stuffs
+		        #;"llama-cpp"
+			;; desktop stuffs
 		        "niri"
 		        "xwayland-satellite"
 		        "xorg-server-xwayland"
- 	                "foot"
  	                "noctalia-git"
+			;; terminal stuffs
+ 	                "foot"
                         "ranger"
                         "btop"
                         "tmux"
-                        "git"
-                        "vim"
-			"openssh"))
+			;; networking stuffs
+                        "openssh"
+			"git"
+			;; dev stuffs
+                        "vim"))
      %base-packages))
 
    ;; Below is the list of system services.  To search for available
