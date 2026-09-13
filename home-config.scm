@@ -163,7 +163,8 @@
 
           (service home-files-service-type
            `((".guile" ,%default-dotguile)
-             (".Xdefaults" ,%default-xdefaults)))
+             (".Xdefaults" ,%default-xdefaults)
+             (".pi/agent/models.json" ,(local-file "pi/.pi/agent/models.json"))))
 
           (service home-xdg-configuration-files-service-type
            `(("gdb/gdbinit" ,%default-gdbinit)
