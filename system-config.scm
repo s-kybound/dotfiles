@@ -9,7 +9,7 @@
 	     (nongnu packages linux)
 	     (nongnu system linux-initrd))
 
-(use-service-modules desktop sound xorg)
+(use-service-modules desktop sound xorg base)
 
 (define user-accounts
   (list (user-account
@@ -106,6 +106,10 @@
                                          (symlink "/fastdisk/models" link))))
                                    '#$(map user-account-name user-accounts))))
 	    (service nvidia-service-type)
+	    ;; makes libnvidia-ml.so findable system-wide
+	    (simple-service 'nvidia-ld-library-path
+			    session-environment-service-type
+			    '(("LD_LIBRARY_PATH" . "/run/current-system/profile/lib")))
 	    (service pam-limits-service-type
 		     (list (pam-limits-entry "@audio" 'both 'rtprio 99)
 			   (pam-limits-entry "@audio" 'both 'memlock 'unlimited)))

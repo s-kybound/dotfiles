@@ -71,6 +71,7 @@
         (list claude-code pi-coding-agent)
         (specifications->packages
           (list "prusa-slicer"
+          	"calibre"
 		"cowsay"
 		"neofetch"
                 "glib-networking"))
