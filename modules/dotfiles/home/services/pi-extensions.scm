@@ -33,49 +33,65 @@
   (version pi-extension-version (default #f))
   (hash    pi-extension-hash (default #f)))
 
-(define (pi-extension->settings-string ext)
+;; pi normalizes a local install to a path relative to ~/.pi/agent, no
+;; matter what form you gave it (verified empirically: absolute input paths
+;; still come out relative). relative-path (defined inside the gexp below,
+;; where it actually runs) computes the same thing.
+(define (pi-extension->settings-string-gexp ext home-directory)
   (match (pi-extension-type ext)
-    ('git (string-append "git:" (pi-extension-source ext)
-                          "@" (pi-extension-ref ext)))
-    ('npm (pi-extension-source ext))))
-
-(define (json-string-list strings)
-  (string-append "[\n"
-                 (string-join
-                   (map (lambda (s) (string-append "    \"" s "\""))
-                        strings)
-                   ",\n")
-                 "\n  ]"))
+    ('git #~(string-append "git:" #$(pi-extension-source ext)
+                            "@" #$(pi-extension-ref ext)))
+    ('npm #~#$(pi-extension-source ext))
+    ('local #~(relative-path (string-append #$home-directory "/.pi/agent")
+                              #$(pi-extension-source ext)))))
 
 (define* (pi-settings-file extensions
                             #:key
                             (theme "dark")
                             (default-provider #f)
                             (default-model #f)
-                            (last-changelog-version #f))
+                            (last-changelog-version #f)
+                            (home-directory "/home/skybound"))
   (computed-file "settings.json"
-    #~(call-with-output-file #$output
-        (lambda (port)
-          (display
-            (string-append
-              "{\n"
-              #$(if last-changelog-version
-                    (string-append "  \"lastChangelogVersion\": \""
-                                   last-changelog-version "\",\n")
-                    "")
-              "  \"theme\": \"" #$theme "\""
-              #$(if default-provider
-                    (string-append ",\n  \"defaultProvider\": \""
-                                   default-provider "\"")
-                    "")
-              #$(if default-model
-                    (string-append ",\n  \"defaultModel\": \""
-                                   default-model "\"")
-                    "")
-              ",\n  \"packages\": "
-              #$(json-string-list (map pi-extension->settings-string extensions))
-              "\n}\n")
-            port)))))
+    (with-imported-modules '((guix build utils))
+      #~(begin
+          (define (relative-path base target)
+            (define (segments p)
+              (filter (lambda (s) (not (string-null? s))) (string-split p #\/)))
+            (let loop ((b (segments base)) (t (segments target)))
+              (if (and (pair? b) (pair? t) (string=? (car b) (car t)))
+                  (loop (cdr b) (cdr t))
+                  (string-join (append (map (const "..") b) t) "/"))))
+          (call-with-output-file #$output
+            (lambda (port)
+              (display
+                (string-append
+                  "{\n"
+                  #$(if last-changelog-version
+                        (string-append "  \"lastChangelogVersion\": \""
+                                       last-changelog-version "\",\n")
+                        "")
+                  "  \"theme\": \"" #$theme "\""
+                  #$(if default-provider
+                        (string-append ",\n  \"defaultProvider\": \""
+                                       default-provider "\"")
+                        "")
+                  #$(if default-model
+                        (string-append ",\n  \"defaultModel\": \""
+                                       default-model "\"")
+                        "")
+                  ",\n  \"packages\": [\n"
+                  (string-join
+                    (list #$@(map (lambda (e)
+                                    #~(string-append
+                                        "    \""
+                                        #$(pi-extension->settings-string-gexp
+                                            e home-directory)
+                                        "\""))
+                                  extensions))
+                    ",\n")
+                  "\n  ]\n}\n")
+                port)))))))
 
 (define (pi-extension-checkout ext)
   (unless (pi-extension-hash ext)
@@ -175,7 +191,8 @@
                                         (default-provider #f)
                                         (default-model #f)
                                         (last-changelog-version #f)
-                                        (npm-hash #f))
+                                        (npm-hash #f)
+                                        (home-directory "/home/skybound"))
   (define npm-extensions
     (filter (lambda (e) (eq? (pi-extension-type e) 'npm)) extensions))
   (unless (or (null? npm-extensions) npm-hash)
@@ -197,7 +214,8 @@ output, or replicate the npm install manually and 'guix hash -x -r' it"))
                              #:theme theme
                              #:default-provider default-provider
                              #:default-model default-model
-                             #:last-changelog-version last-changelog-version))
+                             #:last-changelog-version last-changelog-version
+                             #:home-directory home-directory))
         ,@(if npm-fetch
               `((".pi/agent/npm/package.json"
                  ,(computed-file "package.json"
