@@ -37,7 +37,7 @@
 		"--host" "127.0.0.1"
 		"--port" #$(number->string port)
 		#$@extra-args)
-	  #:log-file #$(string-append "/home/skybound/.local/state/llama-" name ".log")))
+	  #:log-file #$(string-append (getenv "HOME") "/.local/state/llama-" name ".log")))
     (stop #~(make-kill-destructor))))
 
 (define (disk-mount disk)
@@ -222,7 +222,18 @@
           #:default-provider "local-qwen"
           #:default-model "qwen3.6-35b-a3b"
           #:last-changelog-version "0.85.1"
-          #:npm-hash "1dy0pkzqhd3y5na9dkp3vwrbi2rw7kkx9ql8h64df156qgxysamv")
+          #:npm-hash "1dy0pkzqhd3y5na9dkp3vwrbi2rw7kkx9ql8h64df156qgxysamv"
+          #:subagents-json
+          "{
+    \"defaultModel\": \"local-qwen-fast/qwen3-4b\",
+    \"defaultThinking\": \"off\",
+    \"agentOverrides\": {
+      \"oracle\": {
+        \"model\": \"local-qwen/qwen3.6-35b-a3b\",
+        \"thinking\": \"high\"
+      }
+    }
+  }")
 
         %base-home-services))))
 

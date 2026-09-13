@@ -86,7 +86,8 @@
                             (default-provider #f)
                             (default-model #f)
                             (last-changelog-version #f)
-                            (home-directory "/home/skybound"))
+                            (home-directory (getenv "HOME"))
+                            (subagents-json #f))
   (computed-file "settings.json"
     (with-imported-modules '((guix build utils))
       #~(begin
@@ -137,6 +138,9 @@
                                             skills))
                               ",\n")
                             "\n  ]"))
+                  #$(if subagents-json
+                        (string-append ",\n  \"subagents\": " subagents-json)
+                        "")
                   "\n}\n")
                 port)))))))
 
@@ -240,7 +244,8 @@
                                         (default-model #f)
                                         (last-changelog-version #f)
                                         (npm-hash #f)
-                                        (home-directory "/home/skybound"))
+                                        (home-directory (getenv "HOME"))
+                                        (subagents-json #f))
   (define npm-extensions
     (filter (lambda (e) (eq? (pi-extension-type e) 'npm)) extensions))
   (unless (or (null? npm-extensions) npm-hash)
@@ -264,7 +269,8 @@ output, or replicate the npm install manually and 'guix hash -x -r' it"))
                              #:default-provider default-provider
                              #:default-model default-model
                              #:last-changelog-version last-changelog-version
-                             #:home-directory home-directory))
+                             #:home-directory home-directory
+                             #:subagents-json subagents-json))
         ,@(if npm-fetch
               `((".pi/agent/npm/package.json"
                  ,(computed-file "package.json"
