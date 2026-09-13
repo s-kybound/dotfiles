@@ -11,6 +11,14 @@
 
 (use-service-modules desktop sound xorg)
 
+(define user-accounts
+  (list (user-account
+	  (name "skybound")
+          (comment "Kyriel Abad")
+          (group "users")
+          (home-directory "/home/skybound")
+          (supplementary-groups '("wheel" "netdev" "audio" "video")))))
+
 ((nonguix-transformation-nvidia #:driver nvda)
  (operating-system
    (kernel linux)
@@ -31,13 +39,8 @@
    (host-name "flatwhite")
 
    ;; The list of user accounts ('root' is implicit).
-   (users (cons* (user-account
-                   (name "skybound")
-                   (comment "Kyriel Abad")
-                   (group "users")
-                   (home-directory "/home/skybound")
-                   (supplementary-groups '("wheel" "netdev" "audio" "video")))
-                 %base-user-accounts))
+   (users (append user-accounts
+                  %base-user-accounts))
 
    ;; Packages installed system-wide.  Users can also install packages
    ;; under their own account: use 'guix search KEYWORD' to search
@@ -61,7 +64,42 @@
    ;; Below is the list of system services.  To search for available
    ;; services, run 'guix system search KEYWORD' in a terminal.
    (services
-     (cons* (service nvidia-service-type)
+     (cons* (simple-service 'user-disk-directories
+                             activation-service-type
+                             #~(begin
+                                 (use-modules (guix build utils))
+				 ;; make {slow,fast}disk writable by any user (sticky bit like /tmp)
+                                 (for-each
+                                   (lambda (root)
+                                     (chmod root #o1777))
+                                   '("/slowdisk" "/fastdisk"))
+				 ;; create a user-folder in both {slow,fast}disk for each user
+                                 (for-each
+                                   (lambda (username)
+                                     (let* ((pw (getpwnam username))
+                                            (uid (passwd:uid pw))
+                                            (gid (passwd:gid pw)))
+                                       (for-each
+                                         (lambda (root)
+                                           (let ((dir (string-append root "/" username)))
+                                             (mkdir-p dir)
+                                             (chown dir uid gid)
+                                             (chmod dir #o700)))
+                                         '("/slowdisk" "/fastdisk"))))
+                                   '#$(map user-account-name user-accounts))
+				 ;; create a folder for AI models in fastdisk and have symlink
+				 ;; for each user to those models
+                                 (mkdir-p "/fastdisk/models")
+                                 (chmod "/fastdisk/models" #o1777)
+                                 (for-each
+                                   (lambda (username)
+                                     (let* ((pw (getpwnam username))
+                                            (home (passwd:dir pw))
+                                            (link (string-append home "/models")))
+                                       (unless (file-exists? link)
+                                         (symlink "/fastdisk/models" link))))
+                                   '#$(map user-account-name user-accounts))))
+	    (service nvidia-service-type)
 	    (service pam-limits-service-type
 		     (list (pam-limits-entry "@audio" 'both 'rtprio 99)
 			   (pam-limits-entry "@audio" 'both 'memlock 'unlimited)))

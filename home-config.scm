@@ -14,9 +14,37 @@
   #:use-module (gnu home services xdg)
   #:use-module (gnu services)
   #:use-module (gnu system shadow)
+  #:use-module (gnu packages base)
   #:use-module (nongnu packages nvidia)
   #:use-module (claude-code-guix packages claude-code)
   #:use-module (pi-guix packages pi))
+
+(define (disk-mount disk)
+  (let ((mount (string-append "/" (symbol->string disk))))
+    (unless (file-exists? mount)
+      (error "disk-links: mount point does not exist" mount))
+    mount))
+
+(define %disk-links
+  '(("calibre-library" . slowdisk)
+    ("documents"       . slowdisk)
+    ("Downloads"       . slowdisk)
+    ("pictures"        . slowdisk)
+    ("games"           . fastdisk)
+    ("projects"        . fastdisk)))
+
+(define (disk-links-activation-gexp links)
+  #~(for-each
+      (lambda (pair)
+        (let* ((name (car pair))
+               (mount (cdr pair))
+               (target (string-append mount "/" (getenv "USER") "/" name))
+               (link (string-append (getenv "HOME") "/" name)))
+          (system* #$(file-append coreutils "/bin/mkdir") "-p" target)
+          (unless (file-exists? link)
+            (system* #$(file-append coreutils "/bin/ln") "-s" target link))))
+      '#$(map (lambda (pair) (cons (car pair) (disk-mount (cdr pair))))
+              links)))
 
 (define home-config
   (home-environment
@@ -120,7 +148,11 @@
 
           (service home-xdg-configuration-files-service-type
            `(("gdb/gdbinit" ,%default-gdbinit)
-             ("nano/nanorc" ,%default-nanorc))))
+             ("nano/nanorc" ,%default-nanorc)))
+
+          (simple-service 'disk-symlinks
+                          home-activation-service-type
+                          (disk-links-activation-gexp %disk-links)))
 
         %base-home-services))))
 
