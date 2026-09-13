@@ -65,6 +65,24 @@ absolute path). This module computes the same relative path from the
 `local-file`'s resolved store location, so the result matches what
 `pi install ./some/path` would have written.
 
+## Adding a skill
+
+Skills are a separate mechanism from extensions (a different `settings.json`
+key, `"skills"` instead of `"packages"`): plain filesystem paths, recursively
+scanned for `SKILL.md`. No copying needed either way, since a Guix store
+path is immutable - the path just gets listed directly.
+
+```scheme
+(pi-skill (type 'git)
+          (source "github.com/user/skills-repo")
+          (ref "COMMIT_SHA")
+          (hash "BASE32_HASH"))
+```
+
+or `(type 'local) (source (local-file "../my-skills" #:recursive? #t))`.
+Hash computation for git sources is the same as for extensions (see above).
+Pass the list via `#:skills` to `pi-extensions->home-services`.
+
 ## Removing an extension
 
 Delete its `pi-extension` entry from `%pi-extensions`. Nothing else to

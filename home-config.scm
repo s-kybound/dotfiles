@@ -82,6 +82,13 @@
     (pi-extension (type 'npm) (source "teach-me") (version "^2.0.0"))
     (pi-extension (type 'npm) (source "tdd-enforcer") (version "^0.3.10"))))
 
+(define %pi-skills
+  (list
+    (pi-skill (type 'git)
+              (source "github.com/mattpocock/skills")
+              (ref "3cca18b368ae95cdbdebbff572ccafa662551015")
+              (hash "13fzf6bb6qa8n274jjcqy2jvyaa9fcjlaj1xbkfag7n7p3gn4pkl"))))
+
 (define home-config
   (home-environment
     (packages 
@@ -204,6 +211,7 @@
 
         (pi-extensions->home-services
           %pi-extensions
+          #:skills %pi-skills
           #:default-provider "local-qwen"
           #:default-model "qwen3.6-35b-a3b"
           #:last-changelog-version "0.85.1"

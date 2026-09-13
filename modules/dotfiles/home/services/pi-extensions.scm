@@ -20,6 +20,12 @@
             pi-extension-ref
             pi-extension-version
             pi-extension-hash
+            pi-skill
+            pi-skill?
+            pi-skill-type
+            pi-skill-source
+            pi-skill-ref
+            pi-skill-hash
             pi-extensions->home-services))
 
 (define %pi-extensions-node node-lts)
@@ -32,6 +38,34 @@
   (ref     pi-extension-ref (default #f))
   (version pi-extension-version (default #f))
   (hash    pi-extension-hash (default #f)))
+
+;; pi's "skills" array in settings.json is a separate mechanism from
+;; "packages": plain filesystem paths, recursively scanned for SKILL.md, no
+;; git:/npm: prefix syntax. Since Guix store paths are immutable, we can
+;; point straight at a git-fetch checkout or local-file - no copying needed.
+(define-record-type* <pi-skill>
+  pi-skill make-pi-skill
+  pi-skill?
+  (type   pi-skill-type)                 ; 'git or 'local
+  (source pi-skill-source)               ; "host/owner/repo" (git) or a
+                                          ; file-like object (local)
+  (ref    pi-skill-ref (default #f))     ; git commit/tag - git only
+  (hash   pi-skill-hash (default #f)))   ; base32 sha256 - git only
+
+(define (pi-skill-path skill)
+  (match (pi-skill-type skill)
+    ('git (unless (pi-skill-hash skill)
+            (error "pi-skill: git skills require #:hash" (pi-skill-source skill)))
+          (origin
+            (method git-fetch)
+            (uri (git-reference
+                   (url (string-append "https://" (pi-skill-source skill)))
+                   (commit (pi-skill-ref skill))))
+            (file-name (string-append
+                         (last (string-split (pi-skill-source skill) #\/))
+                         "-checkout"))
+            (sha256 (base32 (pi-skill-hash skill)))))
+    ('local (pi-skill-source skill))))
 
 ;; pi normalizes a local install to a path relative to ~/.pi/agent, no
 ;; matter what form you gave it (verified empirically: absolute input paths
@@ -47,6 +81,7 @@
 
 (define* (pi-settings-file extensions
                             #:key
+                            (skills '())
                             (theme "dark")
                             (default-provider #f)
                             (default-model #f)
@@ -90,7 +125,19 @@
                                         "\""))
                                   extensions))
                     ",\n")
-                  "\n  ]\n}\n")
+                  "\n  ]"
+                  #$(if (null? skills)
+                        ""
+                        #~(string-append
+                            ",\n  \"skills\": [\n"
+                            (string-join
+                              (list #$@(map (lambda (s)
+                                              #~(string-append
+                                                  "    \"" #$(pi-skill-path s) "\""))
+                                            skills))
+                              ",\n")
+                            "\n  ]"))
+                  "\n}\n")
                 port)))))))
 
 (define (pi-extension-checkout ext)
@@ -187,6 +234,7 @@
 
 (define* (pi-extensions->home-services extensions
                                         #:key
+                                        (skills '())
                                         (theme "dark")
                                         (default-provider #f)
                                         (default-model #f)
@@ -211,6 +259,7 @@ output, or replicate the npm install manually and 'guix hash -x -r' it"))
                     home-files-service-type
       `((".pi/agent/settings.json"
          ,(pi-settings-file extensions
+                             #:skills skills
                              #:theme theme
                              #:default-provider default-provider
                              #:default-model default-model
