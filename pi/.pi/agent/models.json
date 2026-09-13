@@ -21,6 +21,28 @@
           "maxTokens": 8192
         }
       ]
+    },
+    "local-qwen-fast": {
+      "name": "Local Qwen3-4B subagent (llama.cpp)",
+      "baseUrl": "http://127.0.0.1:48774/v1",
+      "apiKey": "unused",
+      "api": "openai-completions",
+      "models": [
+        {
+          "id": "qwen3-4b",
+          "name": "Qwen3-4B",
+          "reasoning": true,
+          "input": ["text"],
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          },
+          "contextWindow": 8192,
+          "maxTokens": 4096
+        }
+      ]
     }
   }
 }

@@ -205,8 +205,14 @@
                             (llama-server-home-shepherd-service
                               "qwen3.6-35b-a3b" 48772
                               "/fastdisk/models/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf"
-                              '("-ncmoe" "35" "-ngl" "999" "-c" "131072"
-                                "-fa" "on" "-b" "4096" "-ub" "4096"
+                              '("-ncmoe" "40" "-ngl" "999" "-c" "131072"
+                                "-fa" "on" "-b" "2048" "-ub" "2048"
+                                "-t" "8" "-tb" "16" "-np" "1"))
+                            (llama-server-home-shepherd-service
+                              "qwen3-4b-subagent" 48774
+                              "/fastdisk/models/Qwen3-4B-Q5_K_M.gguf"
+                              '("-ngl" "999" "-c" "8192"
+                                "-fa" "on" "-b" "1024" "-ub" "1024"
                                 "-t" "8" "-tb" "16" "-np" "1")))))
 
         (pi-extensions->home-services
