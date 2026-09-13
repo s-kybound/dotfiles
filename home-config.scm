@@ -80,7 +80,8 @@
     (pi-extension (type 'npm) (source "pi-hermes-memory") (version "^0.9.9"))
     (pi-extension (type 'npm) (source "pi-observational-memory") (version "^3.0.4"))
     (pi-extension (type 'npm) (source "teach-me") (version "^2.0.0"))
-    (pi-extension (type 'npm) (source "tdd-enforcer") (version "^0.3.10"))))
+    (pi-extension (type 'npm) (source "tdd-enforcer") (version "^0.3.10"))
+    (pi-extension (type 'npm) (source "pi-subagents") (version "^0.67.0"))))
 
 (define %pi-skills
   (list
@@ -221,7 +222,7 @@
           #:default-provider "local-qwen"
           #:default-model "qwen3.6-35b-a3b"
           #:last-changelog-version "0.85.1"
-          #:npm-hash "08w6k2fbx2rkwh7i44sh32z00gnc50lfz2db4hfs8fxsaag3px8n")
+          #:npm-hash "1dy0pkzqhd3y5na9dkp3vwrbi2rw7kkx9ql8h64df156qgxysamv")
 
         %base-home-services))))
 
