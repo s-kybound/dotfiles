@@ -4,11 +4,13 @@
 (define-module (guix-home-config)
   #:use-module (guix gexp)
   #:use-module (gnu packages)
+  #:use-module (gnu packages machine-learning)
   #:use-module (gnu home)
   #:use-module (gnu home services)
   #:use-module (gnu home services desktop)
   #:use-module (gnu home services fontutils)
   #:use-module (gnu home services shells)
+  #:use-module (gnu home services shepherd)
   #:use-module (gnu home services sound)
   #:use-module (gnu home services ssh)
   #:use-module (gnu home services xdg)
@@ -18,6 +20,22 @@
   #:use-module (nongnu packages nvidia)
   #:use-module (claude-code-guix packages claude-code)
   #:use-module (pi-guix packages pi))
+
+(define (llama-server-home-shepherd-service name port model-path extra-args)
+  (shepherd-service
+    (documentation (string-append "llama.cpp server for " name))
+    (provision (list (string->symbol (string-append "llama-" name))))
+    (auto-start? #t)
+    (respawn? #t)
+    (start
+      #~(make-forkexec-constructor
+	  (list #$(file-append llama-cpp "/bin/llama-server")
+		"-m" #$model-path
+		"--host" "127.0.0.1"
+		"--port" #$(number->string port)
+		#$@extra-args)
+	  #:log-file #$(string-append "/home/skybound/.local/state/llama-" name ".log")))
+    (stop #~(make-kill-destructor))))
 
 (define (disk-mount disk)
   (let ((mount (string-append "/" (symbol->string disk))))
@@ -152,7 +170,17 @@
 
           (simple-service 'disk-symlinks
                           home-activation-service-type
-                          (disk-links-activation-gexp %disk-links)))
+                          (disk-links-activation-gexp %disk-links))
+
+          (simple-service 'llama-servers
+                          home-shepherd-service-type
+                          (list
+                            (llama-server-home-shepherd-service
+                              "qwen3.6-35b-a3b" 48772
+                              "/fastdisk/models/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf"
+                              '("-ncmoe" "35" "-ngl" "999" "-c" "131072"
+                                "-fa" "on" "-b" "4096" "-ub" "4096"
+                                "-t" "8" "-tb" "16" "-np" "1")))))
 
         %base-home-services))))
 
