@@ -80,8 +80,15 @@
     (pi-extension (type 'npm) (source "pi-hermes-memory") (version "^0.9.9"))
     (pi-extension (type 'npm) (source "pi-observational-memory") (version "^3.0.4"))
     (pi-extension (type 'npm) (source "teach-me") (version "^2.0.0"))
-    (pi-extension (type 'npm) (source "tdd-enforcer") (version "^0.3.10"))
-    (pi-extension (type 'npm) (source "pi-subagents") (version "^0.67.0"))))
+    (pi-extension (type 'npm) (source "tdd-enforcer") (version "^0.3.10"))))
+
+(define %pi-subagents-extension
+  (pi-code-extension
+    (name "subagent")
+    (source "github.com/nicobailon/pi-subagents")
+    (ref "f6d2135ec2ca4010b83b7d5ee46774176d49d1e6")
+    (hash "0y1fb4zsxbaxagl5rqbxqbm8gvi1xjgvlbwjly268siasr1rxxds")
+    (node-modules-hash "1pj94hwr29z0dz9idb5kg6gcas19smxj7xrrlxd455ah2nszfbwz")))
 
 (define %pi-skills
   (list
@@ -214,7 +221,9 @@
                               "/fastdisk/models/Qwen3-4B-Q5_K_M.gguf"
                               '("-ngl" "999" "-c" "8192"
                                 "-fa" "on" "-b" "1024" "-ub" "1024"
-                                "-t" "8" "-tb" "16" "-np" "1")))))
+                                "-t" "8" "-tb" "16" "-np" "1"))))
+
+          (pi-code-extension->home-service %pi-subagents-extension))
 
         (pi-extensions->home-services
           %pi-extensions
@@ -222,7 +231,7 @@
           #:default-provider "local-qwen"
           #:default-model "qwen3.6-35b-a3b"
           #:last-changelog-version "0.85.1"
-          #:npm-hash "1dy0pkzqhd3y5na9dkp3vwrbi2rw7kkx9ql8h64df156qgxysamv"
+          #:npm-hash "08w6k2fbx2rkwh7i44sh32z00gnc50lfz2db4hfs8fxsaag3px8n"
           #:subagents-json
           "{
     \"defaultModel\": \"local-qwen-fast/qwen3-4b\",

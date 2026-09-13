@@ -26,6 +26,13 @@
             pi-skill-source
             pi-skill-ref
             pi-skill-hash
+            pi-code-extension
+            pi-code-extension?
+            pi-code-extension-name
+            pi-code-extension-source
+            pi-code-extension-ref
+            pi-code-extension-hash
+            pi-code-extension->home-service
             pi-extensions->home-services))
 
 (define %pi-extensions-node node-lts)
@@ -51,6 +58,63 @@
                                           ; file-like object (local)
   (ref    pi-skill-ref (default #f))     ; git commit/tag - git only
   (hash   pi-skill-hash (default #f)))   ; base32 sha256 - git only
+
+;; A handful of npm-distributed pi extensions (e.g. pi-subagents) are just
+;; installer scripts: their real code lives in the extension's own git repo,
+;; cloned to ~/.pi/agent/extensions/<name> - a different location than the
+;; npm-package cache above, and one pi auto-discovers with no settings.json
+;; entry needed. This covers that case directly, bypassing npm entirely.
+(define-record-type* <pi-code-extension>
+  pi-code-extension make-pi-code-extension
+  pi-code-extension?
+  (name              pi-code-extension-name)     ; directory name under
+                                                  ; ~/.pi/agent/extensions
+  (source            pi-code-extension-source)   ; "host/owner/repo"
+  (ref               pi-code-extension-ref)      ; git commit/tag
+  (hash              pi-code-extension-hash)     ; base32 sha256 of the checkout
+  (node-modules-hash pi-code-extension-node-modules-hash
+                      (default #f)))              ; base32 sha256 of resolving
+                                                   ; the checkout's own
+                                                   ; package.json - #f if it
+                                                   ; has no package.json/deps
+
+(define (pi-code-extension-checkout ext)
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+           (url (string-append "https://" (pi-code-extension-source ext)))
+           (commit (pi-code-extension-ref ext))))
+    (file-name (string-append (pi-code-extension-name ext) "-checkout"))
+    (sha256 (base32 (pi-code-extension-hash ext)))))
+
+(define (pi-code-extension-node-modules ext)
+  (and (pi-code-extension-node-modules-hash ext)
+       (origin
+         (method npm-install-fetch)
+         (uri (file-append (pi-code-extension-checkout ext) "/package.json"))
+         (file-name (string-append (pi-code-extension-name ext) "-node-modules"))
+         (sha256 (base32 (pi-code-extension-node-modules-hash ext))))))
+
+(define* (pi-code-extension->home-service ext #:key (home-directory (getenv "HOME")))
+  (define node-modules (pi-code-extension-node-modules ext))
+  (simple-service (symbol-append 'pi-code-extension-
+                                 (string->symbol (pi-code-extension-name ext)))
+                  home-activation-service-type
+                  #~(begin
+                      (use-modules (guix build utils))
+                      (let ((dest (string-append #$home-directory
+                                                 "/.pi/agent/extensions/"
+                                                 #$(pi-code-extension-name ext))))
+                        (mkdir-p (dirname dest))
+                        (when (file-exists? dest) (delete-file-recursively dest))
+                        (copy-recursively #$(pi-code-extension-checkout ext) dest #:log #f)
+                        (for-each (lambda (f) (chmod f #o755))
+                                  (find-files dest #:directories? #t))
+                        #$(if node-modules
+                              #~(copy-recursively
+                                  (string-append #$node-modules "/node_modules")
+                                  (string-append dest "/node_modules") #:log #f)
+                              #~(begin))))))
 
 (define (pi-skill-path skill)
   (match (pi-skill-type skill)
