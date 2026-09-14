@@ -211,16 +211,10 @@
                           home-shepherd-service-type
                           (list
                             (llama-server-home-shepherd-service
-                              "qwen3.6-35b-a3b" 48772
-                              "/fastdisk/models/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf"
-                              '("-ncmoe" "40" "-ngl" "999" "-c" "131072"
-                                "-fa" "on" "-b" "2048" "-ub" "2048"
-                                "-t" "8" "-tb" "16" "-np" "1"))
-                            (llama-server-home-shepherd-service
-                              "qwen3-4b-subagent" 48774
-                              "/fastdisk/models/Qwen3-4B-Q5_K_M.gguf"
-                              '("-ngl" "999" "-c" "8192"
-                                "-fa" "on" "-b" "1024" "-ub" "1024"
+                              "qwen3-14b" 48772
+                              "/fastdisk/models/Qwen3-14B-Q4_K_M.gguf"
+                              '("-ngl" "999" "-c" "16384"
+                                "-fa" "on" "-b" "512" "-ub" "512"
                                 "-t" "8" "-tb" "16" "-np" "1"))))
 
           (pi-code-extension->home-service %pi-subagents-extension))
@@ -229,19 +223,13 @@
           %pi-extensions
           #:skills %pi-skills
           #:default-provider "local-qwen"
-          #:default-model "qwen3.6-35b-a3b"
+          #:default-model "qwen3-14b"
           #:last-changelog-version "0.85.1"
           #:npm-hash "08w6k2fbx2rkwh7i44sh32z00gnc50lfz2db4hfs8fxsaag3px8n"
           #:subagents-json
           "{
-    \"defaultModel\": \"local-qwen-fast/qwen3-4b\",
-    \"defaultThinking\": \"off\",
-    \"agentOverrides\": {
-      \"oracle\": {
-        \"model\": \"local-qwen/qwen3.6-35b-a3b\",
-        \"thinking\": \"high\"
-      }
-    }
+    \"defaultModel\": \"local-qwen/qwen3-14b\",
+    \"defaultThinking\": \"off\"
   }")
 
         %base-home-services))))
