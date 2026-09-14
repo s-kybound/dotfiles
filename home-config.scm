@@ -213,7 +213,7 @@
                             (llama-server-home-shepherd-service
                               "qwen3.6-35b-a3b" 48772
                               "/fastdisk/models/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf"
-                              '("-ncmoe" "30" "-ngl" "999" "-c" "100000"
+                              '("-ncmoe" "40" "-ngl" "999" "-c" "262144"
                                 "-fa" "on" "-b" "2048" "-ub" "2048"
                                 "-t" "8" "-tb" "16" "-np" "1"))))
 
