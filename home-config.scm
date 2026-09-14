@@ -211,10 +211,10 @@
                           home-shepherd-service-type
                           (list
                             (llama-server-home-shepherd-service
-                              "qwen3-14b" 48772
-                              "/fastdisk/models/Qwen3-14B-Q4_K_M.gguf"
-                              '("-ngl" "999" "-c" "16384"
-                                "-fa" "on" "-b" "512" "-ub" "512"
+                              "qwen3.6-35b-a3b" 48772
+                              "/fastdisk/models/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf"
+                              '("-ncmoe" "30" "-ngl" "999" "-c" "100000"
+                                "-fa" "on" "-b" "2048" "-ub" "2048"
                                 "-t" "8" "-tb" "16" "-np" "1"))))
 
           (pi-code-extension->home-service %pi-subagents-extension))
@@ -223,12 +223,12 @@
           %pi-extensions
           #:skills %pi-skills
           #:default-provider "local-qwen"
-          #:default-model "qwen3-14b"
+          #:default-model "qwen3.6-35b-a3b"
           #:last-changelog-version "0.85.1"
           #:npm-hash "08w6k2fbx2rkwh7i44sh32z00gnc50lfz2db4hfs8fxsaag3px8n"
           #:subagents-json
           "{
-    \"defaultModel\": \"local-qwen/qwen3-14b\",
+    \"defaultModel\": \"local-qwen/qwen3.6-35b-a3b\",
     \"defaultThinking\": \"off\"
   }")
 
