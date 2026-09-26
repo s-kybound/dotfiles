@@ -1,0 +1,86 @@
+#!/bin/sh
+# Bump pi-coding-agent to the latest upstream release (or a given version).
+#
+#   ./tools/update-pi            # latest from the npm registry
+#   ./tools/update-pi 0.86.0     # specific version
+#
+# Only touches modules/custompkgs/pi.scm.  Uses Guix-provided tools only.
+set -eu
+cd "$(dirname "$0")/.."
+
+PKG=modules/custompkgs/pi.scm
+BUILD_EXPR='(@ (custompkgs pi) pi-coding-agent)'
+REGISTRY_URL='https://registry.npmjs.org/@earendil-works%2Fpi-coding-agent'
+ZERO=0000000000000000000000000000000000000000000000000000
+
+# `guix download' prints the store path and then the base32 hash; fail hard if
+# the download did not succeed (e.g. the version does not exist upstream).
+fetch_hash() {
+  h=$(guix download "$1" 2>/dev/null | tail -1)
+  if [ "${#h}" -eq 52 ]; then printf %s "$h"; else
+    echo "error: failed to download $1" >&2; exit 1
+  fi
+}
+
+current=$(sed -n 's/^(define %pi-version "\(.*\)")/\1/p' "$PKG")
+if [ $# -ge 1 ]; then
+  new=$1
+else
+  new=$(guix shell wget jq -- sh -c \
+        "wget -qO- '$REGISTRY_URL' | jq -r '.\"dist-tags\".latest'")
+fi
+
+if [ "$current" = "$new" ]; then
+  echo "pi-coding-agent already at $new"; exit 0
+fi
+echo "pi-coding-agent: $current -> $new"
+
+# Fetch the source hash before touching the file so a failure leaves it intact.
+src_hash=$(fetch_hash \
+  "https://registry.npmjs.org/@earendil-works/pi-coding-agent/-/pi-coding-agent-$new.tgz")
+echo "  source: $src_hash"
+
+# First base32 literal after each definition.
+old_src_hash=$(sed -n '/^(define pi-source/,/base32/ s/.*base32 "\([a-z0-9]*\)".*/\1/p' "$PKG" | head -1)
+old_nm_hash=$(sed -n '/^(define pi-node-modules/,/base32/ s/.*base32 "\([a-z0-9]*\)".*/\1/p' "$PKG" | head -1)
+
+# Empty here would turn the substitutions below into "insert at every line".
+if [ "${#old_src_hash}" -ne 52 ] || [ "${#old_nm_hash}" -ne 52 ]; then
+  echo "error: could not read current hashes from $PKG" >&2; exit 1
+fi
+
+# Keep a copy so we can roll back if the node_modules step fails.
+backup=$(mktemp)
+trap 'rm -f "$backup"' EXIT
+cp "$PKG" "$backup"
+
+sed -i \
+  -e "s/^(define %pi-version \".*\")/(define %pi-version \"$new\")/" \
+  -e "s/$old_src_hash/$src_hash/" \
+  -e "s/$old_nm_hash/$ZERO/" \
+  "$PKG"
+
+# Build once with a zero hash to learn the node_modules hash (this runs
+# `npm ci' inside the fixed-output derivation), then write it back.
+echo "Resolving node_modules hash..."
+nm_hash=$(guix build -L modules -e "$BUILD_EXPR" 2>&1 \
+          | sed -n 's/^ *actual hash: *\([a-z0-9]*\).*/\1/p' | head -1)
+if [ "${#nm_hash}" -ne 52 ]; then
+  cp "$backup" "$PKG"
+  echo "error: could not determine node_modules hash; $PKG restored." >&2
+  echo "       Run 'guix build -L modules -e \"$BUILD_EXPR\"' after setting the hash to zeros to debug." >&2
+  exit 1
+fi
+sed -i "s/$ZERO/$nm_hash/" "$PKG"
+echo "  node_modules: $nm_hash"
+
+echo "Verifying build..."
+if out=$(guix build -L modules -e "$BUILD_EXPR" 2>/dev/null | tail -1) \
+   && env -i HOME="$HOME" TERM=xterm "$out/bin/pi" --version; then
+  echo "Updated $PKG to $new. Review with: git diff"
+else
+  cp "$backup" "$PKG"
+  echo "error: $new builds but does not run; $PKG restored to $current." >&2
+  echo "       Reproduce with: ./tools/update-pi $new  (then inspect before restoring)" >&2
+  exit 1
+fi

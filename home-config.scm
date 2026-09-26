@@ -6,6 +6,8 @@
 (define-module (guix-home-config)
   #:use-module (guix gexp)
   #:use-module (gnu packages)
+  #:use-module (gnu packages base)
+  #:use-module (gnu packages emacs)
   #:use-module (gnu packages machine-learning)
   #:use-module (gnu home)
   #:use-module (gnu home services)
@@ -18,11 +20,14 @@
   #:use-module (gnu home services xdg)
   #:use-module (gnu services)
   #:use-module (gnu system shadow)
-  #:use-module (gnu packages base)
   #:use-module (nongnu packages nvidia)
-  #:use-module (claude-code-guix packages claude-code)
-  #:use-module (pi-guix packages pi)
-  #:use-module (dotfiles home services pi-extensions))
+  #:use-module (nongnu packages game-client)
+  #:use-module (dotfiles home services pi-extensions)
+  #:use-module (custompkgs prusaslicer)
+  #:use-module (custompkgs flatpak)
+  #:use-module (custompkgs emacs)
+  #:use-module (custompkgs claude-code)
+  #:use-module (custompkgs pi))
 
 (define (llama-server-home-shepherd-service name port model-path extra-args)
   (shepherd-service
@@ -40,6 +45,18 @@
 	  #:log-file #$(string-append (getenv "HOME") "/.local/state/llama-" name ".log")))
     (stop #~(make-kill-destructor))))
 
+(define %emacs-daemon-shepherd-service
+  (shepherd-service
+    (documentation "Emacs daemon")
+    (provision '(emacs-daemon))
+    (auto-start? #t)
+    (respawn? #t)
+    (start
+      #~(make-forkexec-constructor
+	  (list #$(file-append emacs "/bin/emacs") "--fg-daemon")
+	  #:log-file #$(string-append (getenv "HOME") "/.local/state/emacs-daemon.log")))
+    (stop #~(make-kill-destructor))))
+
 (define (disk-mount disk)
   (let ((mount (string-append "/" (symbol->string disk))))
     (unless (file-exists? mount)
@@ -47,12 +64,13 @@
     mount))
 
 (define %disk-links
-  '(("calibre-library" . slowdisk)
-    ("documents"       . slowdisk)
-    ("Downloads"       . slowdisk)
-    ("pictures"        . slowdisk)
-    ("games"           . fastdisk)
-    ("projects"        . fastdisk)))
+  '(("calibre-library"   . slowdisk)
+    ("Documents"         . slowdisk)
+    ("Downloads"         . slowdisk)
+    ("Pictures"          . slowdisk)
+    ("games"             . fastdisk)
+    ("projects"          . fastdisk)
+    ("guix-sandbox-home" . fastdisk)))
 
 (define (disk-links-activation-gexp links)
   #~(for-each
@@ -101,25 +119,34 @@
   (home-environment
     (packages 
       (append
-        (list claude-code pi-coding-agent)
+        (list claude-code pi-coding-agent steam)
         (specifications->packages
-          (list "prusa-slicer"
+          (list "zoom"
           	"calibre"
+		"openssl"
 		"cowsay"
 		"neofetch"
-                "glib-networking"))
+                "glib-networking"
+                "unzip"))
         (specifications->packages
           (list "rust" "rust:cargo" "rust:tools" "rust:rust-src" "rust-analyzer"
                 "ocaml" "dune" "ocaml-lsp-server" "ocamlformat" "ocaml-utop" "opam"
                 "node"
                 "gcc-toolchain" "make" "pkg-config"))
+        (list prusa-slicer-flatpak)
+        (list emacs-evil-tutor)
+        flatpak-packages
         (map (compose replace-mesa specification->package)
           (list "pavucontrol"
 	        "xdg-utils"
 	        "alsa-utils"
 	        "foot"
 	        "emacs"
-	        "neovim"
+	        "emacs-evil"
+	        "emacs-evil-collection"
+	        "emacs-magit"
+	        "emacs-paredit"
+	        "emacs-treemacs"
 	        "firefox"
 	        "telegram-desktop"
 	        "font-iosevka"
@@ -127,9 +154,6 @@
     (services
       (append
         (list
-          ;; Uncomment the shell you wish to use for your user:
-          ;(service home-bash-service-type)
-          ;(service home-fish-service-type)
           (service home-zsh-service-type)
 	  (service home-ssh-agent-service-type)
 	  (service home-openssh-service-type
@@ -157,24 +181,40 @@
 	  (simple-service 'foot-config
 			  home-xdg-configuration-files-service-type
 			  (list (list "foot/foot.ini"
-				      (local-file "foot/.config/foot/foot.ini"))))
+				      (local-file "foot/foot.ini"))))
+
 
 	  (simple-service 'wireplumber-dp-audio
 			  home-xdg-configuration-files-service-type
 			  (list (list "wireplumber/wireplumber.conf.d/51-nvidia-dp-audio.conf"
-				      (local-file "wireplumber/.config/wireplumber/wireplumber.conf.d/51-nvidia-dp-audio.conf"))))
+				      (local-file "wireplumber/wireplumber.conf.d/51-nvidia-dp-audio.conf"))))
 
 	  (simple-service 'niri-config
 			  home-xdg-configuration-files-service-type
 			  (list (list "niri/config.kdl"
-				      (local-file "niri/.config/niri/config.kdl"))))
+				      (local-file "niri/config.kdl"))))
+
+          (simple-service 'emacs-editor-env
+                          home-environment-variables-service-type
+                          '(("EDITOR" . "emacsclient -nw")
+                            ("VISUAL" . "emacsclient -c")))
 
           ;; dummy proxy resolver stops libproxy crashing PrusaSlicer's WebKit network process
           (simple-service 'webkit-login-env
                           home-environment-variables-service-type
                           '(("GIO_EXTRA_MODULES" .
                              "$HOME/.guix-home/profile/lib/gio/modules:/run/current-system/profile/lib/gio/modules")
-                            ("GIO_USE_PROXY_RESOLVER" . "dummy")))
+                            ("GIO_USE_PROXY_RESOLVER" . "dummy")
+                            ;; Flatpak exports each app's .desktop file and
+                            ;; icons here; without it in the search path,
+                            ;; app launchers can't find PrusaSlicer at all.
+                            ("XDG_DATA_DIRS" .
+                             "$HOME/.local/share/flatpak/exports/share:$XDG_DATA_DIRS")
+                            ;; steam (nonguix) runs in an FHS container whose $HOME
+                            ;; is this "sandbox home" dir; pointing it at the
+                            ;; fastdisk-backed symlink puts Steam + all installed
+                            ;; games on /fastdisk instead of the root disk
+                            ("GUIX_SANDBOX_HOME" . "$HOME/guix-sandbox-home")))
 
           (service home-xdg-mime-applications-service-type
                    (home-xdg-mime-applications-configuration
@@ -197,15 +237,37 @@
           (service home-files-service-type
            `((".guile" ,%default-dotguile)
              (".Xdefaults" ,%default-xdefaults)
-             (".pi/agent/models.json" ,(local-file "pi/.pi/agent/models.json"))))
+             (".pi/agent/models.json" ,(local-file "pi/agent/models.json"))
+             (".emacs.d/init.el" ,(local-file "emacs/init.el"))
+             ;; gcc-toolchain only provides `gcc'; some build tools (e.g.
+             ;; opam/autotools) invoke `cc' by name.
+             (".local/bin/cc"
+              ,(computed-file
+                "cc"
+                #~(begin
+                    (call-with-output-file #$output
+                      (lambda (port)
+                        (display "#!/bin/sh\nexec gcc \"$@\"\n" port)))
+                    (chmod #$output #o755))))))
+
+          (simple-service 'local-bin-path
+                          home-environment-variables-service-type
+                          '(("PATH" . "$HOME/.local/bin:$PATH")))
 
           (service home-xdg-configuration-files-service-type
            `(("gdb/gdbinit" ,%default-gdbinit)
              ("nano/nanorc" ,%default-nanorc)))
 
+          (service home-xdg-data-files-service-type
+                   flatpak-dbus-service-files)
+
           (simple-service 'disk-symlinks
                           home-activation-service-type
                           (disk-links-activation-gexp %disk-links))
+
+          (simple-service 'flatpak-prusaslicer
+                          home-activation-service-type
+                          flatpak-prusaslicer-activation-gexp)
 
           (simple-service 'llama-servers
                           home-shepherd-service-type
@@ -216,6 +278,14 @@
                               '("-ncmoe" "40" "-ngl" "999" "-c" "262144"
                                 "-fa" "on" "-b" "2048" "-ub" "2048"
                                 "-t" "8" "-tb" "16" "-np" "1"))))
+
+          (simple-service 'emacs-daemon
+                          home-shepherd-service-type
+                          (list %emacs-daemon-shepherd-service))
+
+          (simple-service 'flatpak-portals
+                          home-shepherd-service-type
+                          flatpak-portal-shepherd-services)
 
           (pi-code-extension->home-service %pi-subagents-extension))
 

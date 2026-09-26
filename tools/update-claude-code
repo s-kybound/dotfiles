@@ -1,0 +1,75 @@
+#!/bin/sh
+# Bump claude-code to the latest upstream release (or a given version).
+#
+#   ./tools/update-claude-code            # latest from the npm registry
+#   ./tools/update-claude-code 2.2.0      # specific version
+#
+# Only touches modules/custompkgs/claude-code.scm, and only after all
+# downloads succeeded.  Uses Guix-provided tools only.
+set -eu
+cd "$(dirname "$0")/.."
+
+PKG=modules/custompkgs/claude-code.scm
+REGISTRY_URL='https://registry.npmjs.org/@anthropic-ai%2Fclaude-code'
+
+# `guix download' prints the store path and then the base32 hash; fail hard if
+# the download did not succeed (e.g. the version does not exist upstream).
+fetch_hash() {
+  h=$(guix download "$1" 2>/dev/null | tail -1)
+  if [ "${#h}" -eq 52 ]; then printf %s "$h"; else
+    echo "error: failed to download $1" >&2; exit 1
+  fi
+}
+
+platform_url() {
+  echo "https://registry.npmjs.org/@anthropic-ai/claude-code-$1/-/claude-code-$1-$2.tgz"
+}
+
+current=$(sed -n 's/^(define %claude-code-version "\(.*\)")/\1/p' "$PKG")
+if [ $# -ge 1 ]; then
+  new=$1
+else
+  new=$(guix shell wget jq -- sh -c \
+        "wget -qO- '$REGISTRY_URL' | jq -r '.\"dist-tags\".latest'")
+fi
+
+if [ "$current" = "$new" ]; then
+  echo "claude-code already at $new"; exit 0
+fi
+echo "claude-code: $current -> $new"
+
+# Fetch every hash before touching the file so a failure leaves it intact.
+hash_x64=$(fetch_hash "$(platform_url linux-x64 "$new")")
+hash_arm64=$(fetch_hash "$(platform_url linux-arm64 "$new")")
+echo "  linux-x64:   $hash_x64"
+echo "  linux-arm64: $hash_arm64"
+
+# Keep a copy so a botched edit or a bad release can be rolled back.
+backup=$(mktemp)
+trap 'rm -f "$backup"' EXIT
+cp "$PKG" "$backup"
+
+# The base32 literal sits on the line after each platform's entry.
+sed -i \
+  -e "s/^(define %claude-code-version \".*\")/(define %claude-code-version \"$new\")/" \
+  -e "/\"linux-x64\"/{n;s/base32 \"[a-z0-9]*\"/base32 \"$hash_x64\"/}" \
+  -e "/\"linux-arm64\"/{n;s/base32 \"[a-z0-9]*\"/base32 \"$hash_arm64\"/}" \
+  "$PKG"
+
+# The sed above assumes exact formatting; make sure all three edits landed.
+if ! grep -qF "\"$new\"" "$PKG" \
+   || ! grep -qF "$hash_x64" "$PKG" || ! grep -qF "$hash_arm64" "$PKG"; then
+  cp "$backup" "$PKG"
+  echo "error: edit did not apply cleanly; $PKG restored." >&2
+  exit 1
+fi
+
+echo "Verifying build..."
+if out=$(guix build -L modules -e '(@ (custompkgs claude-code) claude-code)' 2>/dev/null | tail -1) \
+   && env -i HOME="$HOME" TERM=xterm "$out/bin/claude" --version; then
+  echo "Updated $PKG to $new. Review with: git diff"
+else
+  cp "$backup" "$PKG"
+  echo "error: $new does not build/run; $PKG restored to $current." >&2
+  exit 1
+fi
