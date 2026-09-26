@@ -162,7 +162,7 @@
 		     (hosts
 		       (list
 			 (openssh-host
-			   (name "eclair")
+			   (name "mocha")
 			   (host-name "10.6.2.114")
 			   (user "skybound")
 			   (identity-file "~/.ssh/id_ed25519"))))))
