@@ -1,6 +1,3 @@
-;; This is a sample Guix Home configuration which can help setup your
-;; home directory in the same declarative manner as Guix System.
-;; For more information, see the Home Configuration section of the manual.
 (add-to-load-path (string-append (dirname (current-filename)) "/modules"))
 
 (define-module (guix-home-config)
@@ -129,10 +126,18 @@
                 "glib-networking"
                 "unzip"))
         (specifications->packages
-          (list "rust" "rust:cargo" "rust:tools" "rust:rust-src" "rust-analyzer"
+          (list ;; zoom zoom
+	        "rust" "rust:cargo" "rust:tools" "rust:rust-src" "rust-analyzer"
+		;; languages may be exciting but this is home
                 "ocaml" "dune" "ocaml-lsp-server" "ocamlformat" "ocaml-utop" "opam"
+		;; for the big wide web
                 "node"
-                "gcc-toolchain" "make" "pkg-config"))
+		;; the ol reliable
+		"python"
+		;; same ^^
+                "gcc-toolchain" "make" "pkg-config"
+		;; big brain
+		"lean4"))
         (list prusa-slicer-flatpak)
         (list emacs-evil-tutor)
         flatpak-packages
