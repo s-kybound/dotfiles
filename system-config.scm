@@ -60,6 +60,9 @@
                         "ranger"
                         "btop"
                         "tmux"
+			;; bluetooth stuffs
+			"bluez"
+			"bluez-alsa"
 			;; networking stuffs
                         "openssh"
 			"git"
@@ -106,6 +109,7 @@
                                          (symlink "/fastdisk/models" link))))
                                    '#$(map user-account-name user-accounts))))
 	    (service nvidia-service-type)
+	    (service bluetooth-service-type)
 	    ;; makes libnvidia-ml.so findable system-wide
 	    (simple-service 'nvidia-ld-library-path
 			    session-environment-service-type
